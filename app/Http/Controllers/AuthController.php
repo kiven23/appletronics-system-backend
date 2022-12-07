@@ -46,8 +46,8 @@ class AuthController extends Controller
   {
     $permission = [];
     $home = [
-      'text' => 'Home',
-      'icon' => 'home',
+      'text' => 'Dashboard',
+      'icon' => 'mdi-home-outline',
       'route' => '/',
     ];
     if (\Auth::user()->hasRole(['Power Interruption Admin', 'Super Admin'])) {
@@ -546,6 +546,7 @@ class AuthController extends Controller
         ]
       ];
       }
+
       $sapcon = [];
        if (\Auth::user()->hasRole(['Database Administrator'])) {
         $databases = [
@@ -571,7 +572,37 @@ class AuthController extends Controller
         ];
      }
 
-    array_push($permission, @$home, @$Administrative,  @$settings);
+     $bookingsys = [];
+    
+      $book = [
+        'text' => 'Booking',
+        'icon' => 'mdi-book',
+        'route' => '/app/booking/index',
+      ];
+      $jobs = [
+        'text' => 'Jobs',
+        'icon' => 'mdi-clipboard-check',
+        'route' => '/app/booking/jobs',
+      ];
+     
+      
+    array_push($bookingsys , @$book, @$jobs);
+     
+      $app = [
+        'text' => 'APP',
+        'icon' => 'mdi-apps',
+        'subLinks' =>
+        [
+          0 =>
+          [
+            'text' => 'Booking System',
+            'links' => array_filter($bookingsys),
+          ],
+        ]
+      ];
+  
+
+    array_push($permission, @$home, @$Administrative, @$app,  @$settings);
 
     return array_filter($permission);
   }
