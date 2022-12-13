@@ -342,3 +342,10 @@ Route::post('/database/testdb', 'DatabaseSelectionController@testDB')->name('sap
 });
 
 Route::get('/queries/customers/account', 'SapApiController@queries');
+
+
+
+///APPLETRONICS BOOKING
+Route::group(['prefix' => '/booking'], function () {
+	Route::post('/store', 'BkRequestController@store')->name('app.booking.system.store');
+	});
