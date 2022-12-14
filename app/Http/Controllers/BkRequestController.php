@@ -14,64 +14,92 @@ use App\BkCustomerHistory;
 use hash;
 class BkRequestController extends Controller
 {
-    public function store(request $req){
-       //CUSTOMER
-       $CustomerDATA = new BkCustomerInfo();
-       $CustomerDATA->firstname =  $req->firstname;
-       $CustomerDATA->lastname  = $req->lastname;
-       $CustomerDATA->middlename  = $req->middlename;
-       $CustomerDATA->barangay  = $req->barangay;
-       $CustomerDATA->contactperson = $req->contactperson;
-       $CustomerDATA->cpnumber = $req->cpnumber;
-       $CustomerDATA->emailaddress = $req->emailaddress;
-       $CustomerDATA->houseno = $req->houseno;
-       $CustomerDATA->mcity = $req->mcity;
-       $CustomerDATA->organization = $req->organization;
-       $CustomerDATA->province = $req->province;
-       $CustomerDATA->specialinstruction = $req->specialinstruction;
-       $CustomerDATA->street = $req->street;
-       $CustomerDATA->telephoneno = $req->telephoneno;
-       $CustomerDATA->save();
-       $path = Storage::putFile('BookingSystemAttachments',$req->file("attachment"));
-       //REQUEST
-        $RequestDATA = new BkRequest();
-        $RequestDATA->requestid = $req->requestid;
-        $RequestDATA->requesttype = $req->requestType;
-        $RequestDATA->customerid = $CustomerDATA->id;
-        $RequestDATA->branch = \Auth::user()->branch_id;
-        $RequestDATA->userid = \Auth::user()->id;
-        $RequestDATA->unitid = md5($req->requestid); 
-        $RequestDATA->attachment = $path;
-        $RequestDATA->additionalrequest1 = $req->additionalrequest1;
-        $RequestDATA->additionalrequest2 = $req->additionalrequest2;
-        $RequestDATA->specialinstruction = $req->specialinstruction;
-        $RequestDATA->save();
-        foreach(json_decode($req->units) as $data) {
 
-            $units = new BkUnits;
-            $units->unitid = md5($req->requestid);
-            $units->appliancetype = @$data->appliancetype;
-            $units->area = @$data->area;
-            $units->brand = @$data->brand;
-            $units->datepurchase = @$data->datepurchase;
-            $units->deliverydate = @$data->demandreplacement;
-            $units->demandreplacement = @$data->demandreplacement;
-            $units->level = @$data->level;
-            $units->location = @$data->location;
-            $units->locationofinstallation = @$data->locationofinstallation;
-            $units->model = @$data->model;
-            $units->paidamoun = @$data->paidamoun;
-            $units->priority = @$data->priority;
-            $units->prodcategories = @$data->prodcategories;
-            $units->qty = @$data->qty;
-            $units->serialno = @$data->serialno;
-            $units->time  = @$data->time;
-            $units->unitcondition = @$data->unitcondition;
-            $units->wallfinish = @$data->wallfinish;
-            $units->warrantycondition = @$data->warrantycondition;
-            $units->withpowersupply = @$data->withpowersupply;
-            $units->save();
-        }
-        return response()->json($req);
+  
+    public function store(request $req){
+        $checkData = BkRequest::where('requestid', $req->requestid)->pluck('requestid')->first();
+        //CUSTOMER
+         
+        try{
+            if(!$checkData){
+                $CustomerDATA = new BkCustomerInfo();
+                $CustomerDATA->firstname =  @$req->firstname;
+                $CustomerDATA->lastname  = @$req->lastname;
+                $CustomerDATA->middlename  = @$req->middlename;
+                $CustomerDATA->barangay  = @$req->barangay;
+                $CustomerDATA->contactperson = @$req->contactperson;
+                $CustomerDATA->cpnumber = @$req->cpnumber;
+                $CustomerDATA->emailaddress = @$req->emailaddress;
+                $CustomerDATA->houseno = @$req->houseno;
+                $CustomerDATA->mcity = @$req->mcity;
+                $CustomerDATA->organization = @$req->organization;
+                $CustomerDATA->province = @$req->province;
+                $CustomerDATA->specialinstruction = @$req->specialinstruction;
+                $CustomerDATA->street = @$req->street;
+                $CustomerDATA->telephoneno = @$req->telephoneno;
+                $CustomerDATA->save();
+
+                if($req->file("attachment")){
+                $path = Storage::putFile('BookingSystemAttachments',$req->file("attachment"));
+                $name = $req->file("attachment")->getClientOriginalName();
+                }else{
+                $path = '';
+                $name = '';
+                }
+
+                //REQUEST
+                $RequestDATA = new BkRequest();
+                $RequestDATA->requestid = @$req->requestid;
+                $RequestDATA->requesttype = @$req->requestType;
+                $RequestDATA->customerid = @$CustomerDATA->id;
+                $RequestDATA->status = 0;
+                $RequestDATA->branch = @\Auth::user()->branch_id;
+                $RequestDATA->userid = @\Auth::user()->id;
+                $RequestDATA->unitid = @md5($req->requestid); 
+                $RequestDATA->attachment = @$path.'-'.$name;
+                $RequestDATA->additionalrequest1 = @$req->additionalrequest1;
+                $RequestDATA->additionalrequest2 = @$req->additionalrequest2;
+                $RequestDATA->specialinstruction = @$req->specialinstruction;
+                $RequestDATA->save();
+                foreach(json_decode($req->units) as $data) {
+                    $units = new BkUnits;
+                    $units->unitid = md5($req->requestid);
+                    $units->appliancetype = @$data->appliancetype;
+                    $units->area = @$data->area;
+                    $units->brand = @$data->brand;
+                    $units->datepurchase = @$data->datepurchase;
+                    $units->deliverydate = @$data->demandreplacement;
+                    $units->demandreplacement = @$data->demandreplacement;
+                    $units->level = @$data->level;
+                    $units->location = @$data->location;
+                    $units->locationofinstallation = @$data->locationofinstallation;
+                    $units->model = @$data->model;
+                    $units->paidamoun = @$data->paidamoun;
+                    $units->priority = @$data->priority;
+                    $units->prodcategories = @$data->prodcategories;
+                    $units->qty = @$data->qty;
+                    $units->serialno = @$data->serialno;
+                    $units->time  = @$data->time;
+                    $units->unitcondition = @$data->unitcondition;
+                    $units->wallfinish = @$data->wallfinish;
+                    $units->warrantycondition = @$data->warrantycondition;
+                    $units->withpowersupply = @$data->withpowersupply;
+                    $units->save();
+                }
+                return response()->json(['ref'=>$req->requestid, 'iden'=> 0, 'msg' => 'Success']);
+            } 
+                return response()->json(['ref'=> '', 'iden'=> 1,'msg' => 'File Exist']);
+                
+                    }catch(\Exception $e){
+                        return response()->json($e);
+                    }
+                
+    }
+    public function jobs(){
+      return  $data = BkRequest::with("customer")
+                                ->with("user")
+                                ->with("branch")
+                                ->with("units")
+                                ->get();
     }
 }
