@@ -349,4 +349,10 @@ Route::get('/queries/customers/account', 'SapApiController@queries');
 Route::group(['prefix' => '/booking'], function () {
 	Route::post('/store', 'BkRequestController@store')->name('app.booking.system.store');
 	Route::get('/jobs', 'BkRequestController@jobs')->name('app.booking.system.jobs');
+	Route::get('/jobs/counts', 'BkRequestController@count')->name('app.booking.system.jobs/counts');
+   
+	//ACTIONS
+	Route::post('/jobs/action', 'BkRequestController@action')->name('app.booking.system.action');
+	//JOBSUPDATE
+	Route::post('/jobs/jobsupdate', 'BkJobsUpdateController@jobsupdate')->name('app.booking.system.jobs.update');
 });

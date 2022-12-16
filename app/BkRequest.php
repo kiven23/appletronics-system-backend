@@ -22,5 +22,8 @@ class BkRequest extends Model
     {
         return $this->hasMany(BkUnits::class, 'unitid', 'unitid');
     }
+    public function BkJobsUpdate(){
+        return $this->hasMany(BkJobsUpdate::class, 'requestid', 'requestid');
+    }
     
 }

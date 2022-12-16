@@ -15,7 +15,6 @@ use hash;
 class BkRequestController extends Controller
 {
 
-  
     public function store(request $req){
         $checkData = BkRequest::where('requestid', $req->requestid)->pluck('requestid')->first();
         //CUSTOMER
@@ -100,6 +99,36 @@ class BkRequestController extends Controller
                                 ->with("user")
                                 ->with("branch")
                                 ->with("units")
+                                ->with("BkJobsUpdate")
                                 ->get();
+    }
+    public function count(){
+       $UNSIGM = DB::table("bk_requests")->where("status", 0)->get();
+       return count($UNSIGM);
+    }
+
+    public function action(request $req){
+
+      try{
+        if($req->data['status'] == 'Unassigned'){
+            $status = 0;
+        }
+        if($req->data['status'] == 'Accepted'){
+            $status = 1;
+        }
+        if($req->data['status'] == 'Dispatch to Other ASC'){
+            $status = 2;
+        }
+        $update = BkRequest::where("requestid", $req->data['requestID'])->first();
+        $update->status = $status;
+        $update->installer = $req->data['installer'];
+        $update->installationdate = $req->data['installationData'];
+        $update->update();
+        $msg = ["msg"=> 'Job '.$req->data['requestID'].' Success Update to '.$req->data['status'], "error"=> 'success', "type"=>1];
+       }catch(\Exception $e){
+        $msg = ["msg"=>  $e, "error"=> 'error'];
+       }
+       return $msg;
+     
     }
 }
