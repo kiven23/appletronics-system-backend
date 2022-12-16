@@ -350,7 +350,9 @@ Route::group(['prefix' => '/booking'], function () {
 	Route::post('/store', 'BkRequestController@store')->name('app.booking.system.store');
 	Route::get('/jobs', 'BkRequestController@jobs')->name('app.booking.system.jobs');
 	Route::get('/jobs/counts', 'BkRequestController@count')->name('app.booking.system.jobs/counts');
-   
+	Route::post('/jobs/checkrecords', 'BkRequestController@checkrecords')->name('app.booking.system.jobs/checkrecords');
+
+    Route::post('/jobs/salesinvoice/download', 'BkRequestController@downloadsales')->name('app.booking.system.downloadsales');
 	//ACTIONS
 	Route::post('/jobs/action', 'BkRequestController@action')->name('app.booking.system.action');
 	//JOBSUPDATE
