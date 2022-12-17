@@ -61,7 +61,7 @@ class BkRequestController extends Controller
                 $CustomerDATA->telephoneno = @$req->telephoneno;
                 $CustomerDATA->save();
 
-                if($req->file("attachment")){
+                if(@$req->file("attachment")){
                 $path = Storage::putFile('BookingSystemAttachments',$req->file("attachment"));
                 $name = $req->file("attachment")->getClientOriginalName();
                 }else{
@@ -119,14 +119,15 @@ class BkRequestController extends Controller
                 
     }
     public function jobs(request $req){
+        
     if(@$req->id){
         $status = @$req->id;
     }else{
       
         $status = 0;
     }
-      if(\Auth::user()->id == 1){
-           $data = BkRequest::with("customer")
+      if(\Auth::user()->Branch->id == 5){
+     return      $data = BkRequest::with("customer")
             ->with("user")
             ->with("branch")
             ->with("units")
@@ -147,7 +148,7 @@ class BkRequestController extends Controller
       
     }
     public function count(){
-        if(\Auth::user()->id == 1){
+        if(\Auth::user()->Branch->id== 5){
             $UNSIGM = DB::table("bk_requests")->where("status", 0)->get();
             $ACCEPTED = DB::table("bk_requests")->where("status", 1)->get();
             $ASC = DB::table("bk_requests")->where("status", 2)->get();
