@@ -347,6 +347,7 @@ Route::get('/queries/customers/account', 'SapApiController@queries');
 
 ///APPLETRONICS BOOKING
 Route::group(['prefix' => '/booking'], function () {
+	Route::post('/restore', 'BkRequestController@restore')->name('app.booking.system.restore');
 	Route::post('/store', 'BkRequestController@store')->name('app.booking.system.store');
 	Route::get('/jobs', 'BkRequestController@jobs')->name('app.booking.system.jobs');
 	Route::get('/jobs/counts', 'BkRequestController@count')->name('app.booking.system.jobs/counts');

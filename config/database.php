@@ -13,7 +13,7 @@ $connections = [
         'port' => '3306',
         'database' => 'appletronics_new',
         'username' => 'root',
-        'password' => 'crawling23',
+        'password' => 'M15@2dwin0n7y',
        
         'unix_socket' => env('DB_SOCKET', ''),
         'charset' => 'utf8mb4',

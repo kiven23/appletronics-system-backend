@@ -74,7 +74,8 @@ class BkRequestController extends Controller
                 $RequestDATA->requestid = @$req->requestid;
                 $RequestDATA->requesttype = @$req->requestType;
                 $RequestDATA->customerid = @$CustomerDATA->id;
-                $RequestDATA->status = 0;
+                $RequestDATA->status = @$req->identify == 1? 0 : 5;
+                $RequestDATA->identify = @$req->requestType.'/'.@\Auth::user()->branch_id.'/'.@\Auth::user()->id;
                 $RequestDATA->branch = @\Auth::user()->branch_id;
                 $RequestDATA->userid = @\Auth::user()->id;
                 $RequestDATA->unitid = @md5($req->requestid); 
@@ -100,6 +101,7 @@ class BkRequestController extends Controller
                     $units->priority = @$data->priority;
                     $units->prodcategories = @$data->prodcategories;
                     $units->qty = @$data->qty;
+                    $units->problem = @$data->problem;
                     $units->serialno = @$data->serialno;
                     $units->time  = @$data->time;
                     $units->unitcondition = @$data->unitcondition;
@@ -109,7 +111,7 @@ class BkRequestController extends Controller
                     $units->save();
                 }
                 $this->history($req);
-                return response()->json(['ref'=>$req->requestid, 'iden'=> 0, 'msg' => 'Success']);
+                return response()->json(['ref'=>$req->requestid, 'iden'=>  @$req->identify == 1? 0:5, 'msg' => 'Success']);
             } 
                 return response()->json(['ref'=> '', 'iden'=> 1,'msg' => 'File Exist']);
                 
@@ -202,5 +204,22 @@ class BkRequestController extends Controller
         $file = '../storage/app/'.$path;
         return response()->download($file);
      
+    }
+    public function restore(request $req){
+        function ex($e){
+            if($e){
+                $d = explode("-", $e);
+            return $data = BkRequest::with("customer")
+                ->with("user")
+                ->with("branch")
+                ->with("units")
+                ->with("BkJobsUpdate")
+                ->where("status", 5)
+                ->where("identify", $d[1].'/'.@\Auth::user()->branch_id.'/'.@\Auth::user()->id)
+                ->get();
+            }
+        }
+     return ex($req->type);
+         
     }
 }
