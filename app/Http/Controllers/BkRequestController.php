@@ -183,6 +183,7 @@ class BkRequestController extends Controller
         }
         $update = BkRequest::where("requestid", $req->data['requestID'])->first();
         $update->status = $status;
+        $update->callid = $req->data['callid'];
         $update->installer = $req->data['installer'];
         $update->installationdate = $req->data['installationData'];
         $update->update();

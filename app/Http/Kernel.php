@@ -190,5 +190,8 @@ class Kernel extends HttpKernel
 
          // Settings
          'settings' => \App\Http\Middleware\Settings::class,
+
+          // Booking
+          'booking' => \App\Http\Middleware\Booking::class,
     ];
 }
