@@ -83,6 +83,8 @@ class BkRequestController extends Controller
                 $RequestDATA->userid = @\Auth::user()->id;
                 $RequestDATA->unitid = @md5($req->requestid); 
                 $RequestDATA->attachment = @$path;
+                $RequestDATA->locandorg = @$req->locanorg;
+                //location of unit and name of organization
                 $RequestDATA->additionalrequest1 = @$req->additionalrequest1;
                 $RequestDATA->additionalrequest2 = @$req->additionalrequest2;
                 $RequestDATA->specialinstruction = @$req->specialinstruction;
@@ -94,10 +96,12 @@ class BkRequestController extends Controller
                     $units->area = @$data->area;
                     $units->brand = @$data->brand;
                     $units->datepurchase = @$data->datepurchase;
-                    $units->deliverydate = @$data->demandreplacement;
+                    $units->deliverydate = @$data->deliverydate;
                     $units->demandreplacement = @$data->demandreplacement;
                     $units->level = @$data->level;
                     $units->location = @$data->location;
+
+                    //INSTALLATION ADDRESS
                     $units->locationofinstallation = @$data->locationofinstallation;
                     $units->model = @$data->model;
                     $units->paidamoun = @$data->paidamoun;
