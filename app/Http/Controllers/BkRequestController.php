@@ -26,6 +26,7 @@ class BkRequestController extends Controller
                 $CustomerDATA->contactperson = @$req->contactperson;
                 $CustomerDATA->cpnumber = @$req->cpnumber;
                 $CustomerDATA->emailaddress = @$req->emailaddress;
+                 
                 $CustomerDATA->houseno = @$req->houseno;
                 $CustomerDATA->mcity = @$req->mcity;
                 $CustomerDATA->organization = @$req->organization;
@@ -51,6 +52,7 @@ class BkRequestController extends Controller
                 $CustomerDATA->barangay  = @$req->barangay;
                 $CustomerDATA->contactperson = @$req->contactperson;
                 $CustomerDATA->cpnumber = @$req->cpnumber;
+                
                 $CustomerDATA->emailaddress = @$req->emailaddress;
                 $CustomerDATA->houseno = @$req->houseno;
                 $CustomerDATA->mcity = @$req->mcity;
@@ -74,6 +76,7 @@ class BkRequestController extends Controller
                 $RequestDATA->requestid = @$req->requestid;
                 $RequestDATA->requesttype = @$req->requestType;
                 $RequestDATA->customerid = @$CustomerDATA->id;
+                $CustomerDATA->landmark = @$req->landmark;
                 $RequestDATA->status = @$req->identify == 1? 0 : 5;
                 $RequestDATA->identify = @$req->requestType.'/'.@\Auth::user()->branch_id.'/'.@\Auth::user()->id;
                 $RequestDATA->branch = @\Auth::user()->branch_id;
