@@ -83,8 +83,14 @@ class BkRequestController extends Controller
                 $RequestDATA->userid = @\Auth::user()->id;
                 $RequestDATA->unitid = @md5($req->requestid); 
                 $RequestDATA->attachment = @$path;
+
+                //LOCATION UNIT  
                 $RequestDATA->locandorg = @$req->locanorg;
-                //location of unit and name of organization
+                // AND NAME OF ORGANIZATION
+                $RequestDATA->organizationname = @$req->orgname;
+                //SURVEY LOCATION
+                $RequestDATA->surveyloc = @$req->surveylocation;
+
                 $RequestDATA->additionalrequest1 = @$req->additionalrequest1;
                 $RequestDATA->additionalrequest2 = @$req->additionalrequest2;
                 $RequestDATA->specialinstruction = @$req->specialinstruction;
@@ -229,5 +235,34 @@ class BkRequestController extends Controller
         }
      return ex($req->type);
          
+    }
+
+    public function calendarschedule(){
+        
+        function calendar($sch){
+              
+            foreach($sch as $ds){
+                $detail = ["requestid"=> $ds->requestid,
+                           "callid"=> $ds->callid,
+                           "customer"=> $ds->customer];
+                $schedules[] = ["name"=> $ds->requesttype.' - '. $ds->customer->lastname .', '. $ds->customer->firstname,
+                 "start"=> $ds->installationdate, 
+                 "color"=> "green", 
+                 "timed"=> true, 
+                 "details"=> $detail];
+            }
+           return $schedules;
+           
+        }
+        $data = BkRequest::with("customer")
+                            ->with("user")
+                            ->with("branch")
+                            ->with("units")
+                            ->with("BkJobsUpdate")
+                            ->where("status", 1)
+                            ->whereNotNull("installationdate")
+                            ->get();
+     
+        return  calendar($data);
     }
 }
