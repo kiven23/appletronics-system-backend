@@ -12,6 +12,8 @@ use App\BkUnits;
 use App\BkCustomerInfo;
 use App\BkCustomerHistory;
 use hash;
+use App\user;
+ 
 class BkRequestController extends Controller
 {
     public function history($req){
@@ -134,20 +136,46 @@ class BkRequestController extends Controller
                 
     }
     public function jobs(request $req){
-        
+    
+    if(\Auth::user()->hasRole(['AREA1'])){
+        $region = 1;
+    }
+    if(\Auth::user()->hasRole(['AREA2'])){
+        $region = 2;
+    }
+    if(\Auth::user()->hasRole(['AREA3'])){
+        $region = 3;
+    }
+    if(\Auth::user()->hasRole(['AREASALL'])){
+        $region = 4;
+    }
+    
+    $branches = DB::table("branches")
+                     ->where('region_id', $region)->pluck('id'); 
     if(@$req->id){
         $status = @$req->id;
     }else{
       
         $status = 0;
     }
+    
       if(\Auth::user()->Branch->id == 5){
-     return      $data = BkRequest::with("customer")
-            ->with("user")
-            ->with("branch")
-            ->with("units")
-            ->with("BkJobsUpdate")
-            ->where("status",  $status)
+     return $data = BkRequest::with("customer")
+                ->with("user")
+                ->with("branch")
+                ->with("units")
+                ->with("BkJobsUpdate")
+                ->where(function ($query) use($branches, $region) {
+                    if($region !== 4){
+                        for ($i = 0; $i < count($branches); $i++){
+                            $query->orwhere('branch',   $branches[$i]  );
+                        }
+                    }
+                    
+
+                }
+                )
+                ->where("status",  $status)
             ->get();
       }else{
          $data = BkRequest::with("customer")

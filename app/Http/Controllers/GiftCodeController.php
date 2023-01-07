@@ -13,7 +13,7 @@ class GiftCodeController extends Controller
     public function sync(){
     
            $SQL = DB::connection('sqlsrv')
-            ->select('SELECT TOP 3 OINV.CARDNAME, OINV.CARDCODE, COUNT(*) AS REPEAT, OINV.CREATEDATE, OCRD.U_BDAY, OCRD.CELLULAR
+            ->select('SELECT TOP 3 OINV.CARDNAME, OINV.CARDCODE, COUNT(*) AS REPEAT_3_numbers, OINV.CREATEDATE, OCRD.U_BDAY, OCRD.CELLULAR
                         FROM OINV 
                         
                         JOIN OCRD ON OINV.CARDCODE = OCRD.CARDCODE

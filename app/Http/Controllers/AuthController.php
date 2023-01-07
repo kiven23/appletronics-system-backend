@@ -571,38 +571,24 @@ class AuthController extends Controller
           ]
         ];
      }
-
-     $bookingsys = [];
-    
+ 
       $book = [
         'text' => 'Booking',
         'icon' => 'mdi-book',
         'route' => '/app/booking/index',
+      ];
+      $scalate = [
+        'text' => 'Scalate',
+        'icon' => 'mdi-escalator',
+        'route' => '/app/booking/scalate',
       ];
       $jobs = [
         'text' => 'Jobs',
         'icon' => 'mdi-clipboard-check',
         'route' => '/app/booking/jobs',
       ];
-     
-      
-    array_push($bookingsys , @$book, @$jobs);
-     
-      $app = [
-        'text' => 'APP',
-        'icon' => 'mdi-apps',
-        'subLinks' =>
-        [
-          0 =>
-          [
-            'text' => 'Booking System',
-            'links' => array_filter($bookingsys),
-          ],
-        ]
-      ];
-  
 
-    array_push($permission, @$home, @$Administrative, @$app,  @$settings);
+    array_push($permission, @$home, @$Administrative, @$book, @$scalate, @$jobs);
 
     return array_filter($permission);
   }
