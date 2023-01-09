@@ -42,6 +42,7 @@ class BkRequestController extends Controller
        return "OK";
     }
     public function store(request $req){
+         
         $checkData = BkRequest::where('requestid', $req->requestid)->pluck('requestid')->first();
         //CUSTOMER
          
@@ -64,7 +65,7 @@ class BkRequestController extends Controller
                 $CustomerDATA->street = @$req->street;
                 $CustomerDATA->telephoneno = @$req->telephoneno;
                 $CustomerDATA->save();
-
+                
                 if(@$req->file("attachment")){
                 $path = Storage::putFile('BookingSystemAttachments',$req->file("attachment"));
                 $name = $req->file("attachment")->getClientOriginalName();
@@ -72,7 +73,7 @@ class BkRequestController extends Controller
                 $path = '';
                 $name = '';
                 }
-
+                  
                 //REQUEST
                 $RequestDATA = new BkRequest();
                 $RequestDATA->requestid = @$req->requestid;
@@ -98,6 +99,9 @@ class BkRequestController extends Controller
                 $RequestDATA->specialinstruction = @$req->specialinstruction;
                 $RequestDATA->save();
                 foreach(json_decode($req->units) as $data) {
+                   
+                     
+                  
                     $units = new BkUnits;
                     $units->unitid = md5($req->requestid);
                     $units->appliancetype = @$data->appliancetype;
@@ -110,7 +114,7 @@ class BkRequestController extends Controller
                     $units->location = @$data->location;
 
                     //INSTALLATION ADDRESS
-                    $units->locationofinstallation = @$data->locationofinstallation;
+                    $units->locationofinstallation = $data->locationofinstallation === 0 ?@$req->barangay.','.@$req->mcity.','.@$req->province:  $data->locationofinstallation;
                     $units->model = @$data->model;
                     $units->paidamoun = @$data->paidamoun;
                     $units->priority = @$data->priority;
@@ -118,13 +122,15 @@ class BkRequestController extends Controller
                     $units->qty = @$data->qty;
                     $units->problem = @$data->problem;
                     $units->serialno = @$data->serialno;
-                    $units->time  = @$data->time;
+                    $units->time  = @$data->time->HH.':'.@$data->time->mm;
                     $units->unitcondition = @$data->unitcondition;
                     $units->wallfinish = @$data->wallfinish;
                     $units->warrantycondition = @$data->warrantycondition;
                     $units->withpowersupply = @$data->withpowersupply;
-                    $units->save();
+                     $units->save();
+                    
                 }
+              
                 $this->history($req);
                 return response()->json(['ref'=>$req->requestid, 'iden'=>  @$req->identify == 1? 0:5, 'msg' => 'Success']);
             } 
