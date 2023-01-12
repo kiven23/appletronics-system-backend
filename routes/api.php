@@ -361,7 +361,9 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
 	//ACTIONS
 	Route::post('/jobs/action', 'BkRequestController@action')->name('app.booking.system.action');
 	
-	
+	//SCALATE 
+
+	Route::post('/scalate/index', 'BkScalateController@index')->name('app.booking.system.jobs.scalate');
 	//BRANCH IN ADMIN ACCESS
 	//JOBSUPDATE
 	Route::post('/jobs/jobsupdate', 'BkJobsUpdateController@jobsupdate')->name('app.booking.system.jobs.update');
@@ -369,3 +371,4 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
 	//Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->name('app.booking.system.jobs.calendarschedule');
 });
 Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->name('app.booking.system.jobs.calendarschedule');
+Route::get('/jobs/customers/list', 'BkScalateController@customerList')->name('app.booking.system.jobs.customerList');

@@ -42,7 +42,8 @@ class BkRequestController extends Controller
        return "OK";
     }
     public function store(request $req){
-         
+        
+ 
         $checkData = BkRequest::where('requestid', $req->requestid)->pluck('requestid')->first();
         //CUSTOMER
          
@@ -144,7 +145,7 @@ class BkRequestController extends Controller
                 
     }
     public function jobs(request $req){
-    
+   
     if(\Auth::user()->hasRole(['AREA1'])){
         $region = 1;
     }
@@ -219,7 +220,13 @@ class BkRequestController extends Controller
     }
 
     public function action(request $req){
-
+        $update = BkRequest::where("requestid", $req->data['requestID'])->first();
+        $update->status = 1;
+        $update->callid = @$req->data['callid'];
+        $update->installer = @$req->data['installer'];
+        $update->installationdate = @$req->data['installationData'];
+        $update->update();
+        return "";
       try{
         if($req->data['status'] == 'Unassigned'){
             $status = 0;

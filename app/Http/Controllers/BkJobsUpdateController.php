@@ -17,7 +17,7 @@ class BkJobsUpdateController extends Controller
 {
  
    public function jobsupdate(request $req){
-  
+ 
        try {
   
         $updates = new BkJobsUpdate;
