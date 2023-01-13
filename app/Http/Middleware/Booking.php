@@ -16,7 +16,10 @@ class Booking
     public function handle($request, Closure $next)
     {
         
-       if ($request->is('api/booking/jobs')|| $request->is('api/booking/store') ||  $request->is('api/booking/scalate/index') ) {
+       if ($request->is('api/booking/jobs')|| $request->is('api/booking/store')
+        ||  $request->is('api/booking/scalate/index')
+        ||  $request->is('api/booking/scalate/create')
+        ||  $request->is('api/booking/scalate/threads') ) {
         if (\Auth::user()->hasRole(['Booking Admin User',
                                     'Booking Branch User'
                                      ])) {
