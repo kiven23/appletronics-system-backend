@@ -42,11 +42,8 @@ class BkRequestController extends Controller
        return "OK";
     }
     public function store(request $req){
-        
- 
         $checkData = BkRequest::where('requestid', $req->requestid)->pluck('requestid')->first();
         //CUSTOMER
-         
         try{
             if(!$checkData){
                 $CustomerDATA = new BkCustomerInfo();
@@ -56,7 +53,6 @@ class BkRequestController extends Controller
                 $CustomerDATA->barangay  = @$req->barangay;
                 $CustomerDATA->contactperson = @$req->contactperson;
                 $CustomerDATA->cpnumber = @$req->cpnumber;
-          
                 $CustomerDATA->emailaddress = @$req->emailaddress;
                 $CustomerDATA->houseno = @$req->houseno;
                 $CustomerDATA->mcity = @$req->mcity;
@@ -101,9 +97,6 @@ class BkRequestController extends Controller
                 $RequestDATA->specialinstruction = @$req->specialinstruction;
                 $RequestDATA->save();
                 foreach(json_decode($req->units) as $data) {
-                   
-                     
-                  
                     $units = new BkUnits;
                     $units->unitid = md5($req->requestid);
                     $units->appliancetype = @$data->appliancetype;
@@ -133,12 +126,10 @@ class BkRequestController extends Controller
                      $units->save();
                     
                 }
-              
                 $this->history($req);
                 return response()->json(['ref'=>$req->requestid, 'iden'=>  @$req->identify == 1? 0:5, 'msg' => 'Success']);
             } 
                 return response()->json(['ref'=> '', 'iden'=> 1,'msg' => 'File Exist']);
-                
                     }catch(\Exception $e){
                         return response()->json($e);
                     }

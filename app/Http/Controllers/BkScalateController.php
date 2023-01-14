@@ -51,7 +51,7 @@ class BkScalateController extends Controller
    }
      
    public function create(Request $req){
-    return $req;
+        
         if($req->identify == 1){
             $create = new BkScalate();
             $create->customername = $req->customerdata['whole'];
@@ -60,34 +60,86 @@ class BkScalateController extends Controller
             $create->branch = \Auth::user()->branch_id;
             $create->requestid = $req->customerdata['requestid'];
             $create->save();
-            
             $threads = new BkScalateUpdates();
             $threads->scalate_id = $create->id;
             $threads->threads = @$req->note;
+            $threads->from_by = \Auth::user()->id;
             $threads->save();
-            return $this->index();
-        }else if($req->identify == 1){
+            $this->index();
+        } if($req->identify == 2){
             $update = BkScalate::find($req->id);
             $update->categories = $req->category;
-            $update->save();
-            return $this->index();
+            $update->update();
+            $threads = new BkScalateUpdates();
+            $threads->scalate_id = $update->id;
+            $threads->threads = 'Update Category to '. $req->category;
+            $threads->from_by = \Auth::user()->id;
+            $threads->save();
+
+            $out =  DB::table("bk_scalate_updates")
+            ->select(\DB::raw("users.first_name as from_bys"),"scalate_id","threads","bk_scalate_updates.created_at as created_at","bk_scalate_updates.updated_at as updated_at" )
+            ->leftJoin("users", "users.id","=", "bk_scalate_updates.from_by")
+            ->where("bk_scalate_updates.id",  $threads->id)
+            ->get();
+            $this->index();
+             return $out;
+            
+        }
+        //UPDATE STATUS TO RESOLVE
+        if($req->identify == 3){
+            $update = BkScalate::find($req->id);
+            $update->status = 2;
+            $update->update();
+            $threads = new BkScalateUpdates();
+            $threads->scalate_id = $update->id;
+            $threads->threads = 'System Set to Close Mark as Resolved';
+            $threads->from_by = \Auth::user()->id;
+            $threads->save();
+
+            $out =  DB::table("bk_scalate_updates")
+            ->select(\DB::raw("users.first_name as from_bys"),"scalate_id","threads","bk_scalate_updates.created_at as created_at","bk_scalate_updates.updated_at as updated_at" )
+            ->leftJoin("users", "users.id","=", "bk_scalate_updates.from_by")
+            ->where("bk_scalate_updates.id",  $threads->id)
+            ->get();
+             return $out;
+            
+        }
+        //UPDATE STATUS TO OPEN PENDING
+        if($req->identify == 5){
+            $update = BkScalate::find($req->id);
+            $update->status = 1;
+            $update->update();
+
+            $threads = new BkScalateUpdates();
+            $threads->scalate_id = $update->id;
+            $threads->threads = 'System Set To Open Mark as PENDING';
+            $threads->from_by = \Auth::user()->id;
+            $threads->save();
+
+            $out =  DB::table("bk_scalate_updates")
+            ->select(\DB::raw("users.first_name as from_bys"),"scalate_id","threads","bk_scalate_updates.created_at as created_at","bk_scalate_updates.updated_at as updated_at" )
+            ->leftJoin("users", "users.id","=", "bk_scalate_updates.from_by")
+            ->where("bk_scalate_updates.id",  $threads->id)
+            ->get();
+             return $out;
         }
         
         
         
    }
    public function threads(Request $req){
-       
        $threads = new BkScalateUpdates();
        $threads->scalate_id = $req->scalate_id;
        $threads->threads = $req->thread;
        $threads->from_by = \Auth::user()->id;
        $threads->save();
+
        $out =  DB::table("bk_scalate_updates")
                 ->select(\DB::raw("users.first_name as from_bys"),"scalate_id","threads","bk_scalate_updates.created_at as created_at","bk_scalate_updates.updated_at as updated_at" )
                 ->leftJoin("users", "users.id","=", "bk_scalate_updates.from_by")
                 ->where("bk_scalate_updates.id",  $threads->id)
                 ->get();
+                
        return $out;
    }
 }
