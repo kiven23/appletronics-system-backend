@@ -372,5 +372,6 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
 
 	//Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->name('app.booking.system.jobs.calendarschedule');
 });
+Route::get('/scalate/count', 'BkScalateController@scalatecout')->name('app.scalatecount');
 Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->name('app.booking.system.jobs.calendarschedule');
 Route::get('/jobs/customers/list', 'BkScalateController@customerList')->name('app.booking.system.jobs.customerList');

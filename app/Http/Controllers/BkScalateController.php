@@ -142,4 +142,10 @@ class BkScalateController extends Controller
                 
        return $out;
    }
+   public function scalatecout(){
+        $total['pending'] =  BkScalate::all()->where("status", 1)->count();
+        $total['resolved'] =  BkScalate::all()->where("status", 2)->count();
+        $total['total'] =  BkScalate::all()->count();
+        return  $total;
+   }
 }

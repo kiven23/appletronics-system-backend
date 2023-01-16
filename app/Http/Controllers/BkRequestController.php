@@ -136,30 +136,30 @@ class BkRequestController extends Controller
                 
     }
     public function jobs(request $req){
-   
-    if(\Auth::user()->hasRole(['AREA1'])){
-        $region = 1;
-    }
-    if(\Auth::user()->hasRole(['AREA2'])){
-        $region = 2;
-    }
-    if(\Auth::user()->hasRole(['AREA3'])){
-        $region = 3;
-    }
-    if(\Auth::user()->hasRole(['AREASALL'])){
-        $region = 4;
-    }
-    
-    $branches = DB::table("branches")
-                     ->where('region_id', $region)->pluck('id'); 
-    if(@$req->id){
-        $status = @$req->id;
-    }else{
-      
-        $status = 0;
-    }
-    
+        if(@$req->id){
+            $status = @$req->id;
+        }else{
+          
+            $status = 0;
+        }
+
       if(\Auth::user()->Branch->id == 5){
+        if(\Auth::user()->hasRole(['AREA1'])){
+            $region = 1;
+        }
+        if(\Auth::user()->hasRole(['AREA2'])){
+            $region = 2;
+        }
+        if(\Auth::user()->hasRole(['AREA3'])){
+            $region = 3;
+        }
+        if(\Auth::user()->hasRole(['AREASALL'])){
+            $region = 4;
+        }
+        
+        $branches = DB::table("branches")
+                         ->where('region_id', $region)->pluck('id'); 
+   
      return $data = BkRequest::with("customer")
                 ->with("user")
                 ->with("branch")
@@ -168,11 +168,8 @@ class BkRequestController extends Controller
                 ->where(function ($query) use($branches, $region) {
                     if($region !== 4){
                         for ($i = 0; $i < count($branches); $i++){
-                            $query->orwhere('branch',   $branches[$i]  );
-                        }
-                    }
-                    
-
+                            $query->orwhere('branch',   $branches[$i]);
+                        }}
                 }
                 )
                 ->where("status",  $status)
@@ -192,9 +189,44 @@ class BkRequestController extends Controller
     }
     public function count(){
         if(\Auth::user()->Branch->id== 5){
-            $UNSIGM = DB::table("bk_requests")->where("status", 0)->get();
-            $ACCEPTED = DB::table("bk_requests")->where("status", 1)->get();
-            $ASC = DB::table("bk_requests")->where("status", 2)->get();
+            if(\Auth::user()->hasRole(['AREA1'])){
+                $region = 1;
+            }
+            if(\Auth::user()->hasRole(['AREA2'])){
+                $region = 2;
+            }
+            if(\Auth::user()->hasRole(['AREA3'])){
+                $region = 3;
+            }
+            if(\Auth::user()->hasRole(['AREASALL'])){
+                $region = 4;
+            }
+            
+            $branches = DB::table("branches")
+                             ->where('region_id', $region)->pluck('id'); 
+                             
+            $UNSIGM = DB::table("bk_requests")->where("status", 0)
+            ->where(function ($query) use($branches, $region) {
+                if($region !== 4){
+                    for ($i = 0; $i < count($branches); $i++){
+                        $query->orwhere('branch',   $branches[$i]);
+                    }}
+            })
+            ->get();
+            $ACCEPTED = DB::table("bk_requests")->where("status", 1)
+            ->where(function ($query) use($branches, $region) {
+                if($region !== 4){
+                    for ($i = 0; $i < count($branches); $i++){
+                        $query->orwhere('branch',   $branches[$i]);
+                    }}
+            })->get();
+            $ASC = DB::table("bk_requests")->where("status", 2)
+            ->where(function ($query) use($branches, $region) {
+                if($region !== 4){
+                    for ($i = 0; $i < count($branches); $i++){
+                        $query->orwhere('branch',   $branches[$i]);
+                    }}
+            })->get();
             $ARRAYDATA = ["unsigned"=>count($UNSIGM),
                             "accepted"=> count($ACCEPTED),
                             "asc"=>count($ASC)];
