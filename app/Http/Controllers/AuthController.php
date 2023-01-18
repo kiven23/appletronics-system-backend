@@ -578,7 +578,7 @@ class AuthController extends Controller
         'route' => '/app/booking/index',
       ];
       $scalate = [
-        'text' => 'Scalate',
+        'text' => 'Escalate',
         'icon' => 'mdi-escalator',
         'route' => '/app/booking/scalate',
       ];

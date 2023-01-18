@@ -13,14 +13,31 @@ use App\BkCustomerHistory;
 use App\BkJobsUpdate;
 use App\BkScalate;
 use App\BkScalateUpdates;
+use App\BkNotify as notify; 
 class BkScalateController extends Controller
 {
+
+   public function notify($id){
+  
+        $receiver = \Auth::user()->branch_id !== 5 ? 5: \Auth::user()->branch_id;
+        $insert =  new notify;
+        $insert->bsender_id = \Auth::user()->branch_id;
+        $insert->breceiver_id = $receiver;
+        $insert->status = 0;
+        $insert->event_id = $id;
+        $insert->save();
+     
+   }
+   public function notification(){
+    $receiver = \Auth::user()->branch_id == 5 ? 5: \Auth::user()->branch_id;
+    $data = DB::table('bk_notifies')
+                             ->join("branches", "bk_notifies.bsender_id" , "=", "branches.id")
+                             ->join("bk_scalates", "bk_notifies.event_id", "=", "bk_scalates.id")
+                             ->where('breceiver_id',  $receiver )
+                             ->get();
+    return $data;
+    }
    public function index(){
-
-     //  return   $data = BkScalate::with(["threads" => function($q){
-     //                      $q->with("fromby");
-     //                      }])->get();
-
         $scalateData = DB::table("bk_scalates")->get();
         foreach($scalateData as $data){
             $scalateFData[] = ["data" => $data,
@@ -51,7 +68,7 @@ class BkScalateController extends Controller
    }
      
    public function create(Request $req){
-        
+       
         if($req->identify == 1){
             $create = new BkScalate();
             $create->customername = $req->customerdata['whole'];
@@ -66,6 +83,7 @@ class BkScalateController extends Controller
             $threads->from_by = \Auth::user()->id;
             $threads->save();
             $this->index();
+            $this->notify($create->id);
         } if($req->identify == 2){
             $update = BkScalate::find($req->id);
             $update->categories = $req->category;
@@ -133,13 +151,13 @@ class BkScalateController extends Controller
        $threads->threads = $req->thread;
        $threads->from_by = \Auth::user()->id;
        $threads->save();
-
+       
        $out =  DB::table("bk_scalate_updates")
                 ->select(\DB::raw("users.first_name as from_bys"),"scalate_id","threads","bk_scalate_updates.created_at as created_at","bk_scalate_updates.updated_at as updated_at" )
                 ->leftJoin("users", "users.id","=", "bk_scalate_updates.from_by")
                 ->where("bk_scalate_updates.id",  $threads->id)
                 ->get();
-                
+       $this->notify($req->scalate_id);        
        return $out;
    }
    public function scalatecout(){

@@ -96,6 +96,14 @@ class BkRequestController extends Controller
                 $RequestDATA->additionalrequest2 = @$req->additionalrequest2;
                 $RequestDATA->specialinstruction = @$req->specialinstruction;
                 $RequestDATA->save();
+                
+
+                $branchid = \Auth::user()->branch_id;
+                $branch = DB::table("branches")->where("id", $branchid)->pluck("seriesname")->first();
+                $ticketno = $branch.'-'.sprintf("%06s", $RequestDATA->id);
+                DB::table("bk_requests")->where("id", $RequestDATA->id)->update([
+                    "ticketno" => $ticketno
+                ]);
                 foreach(json_decode($req->units) as $data) {
                     $units = new BkUnits;
                     $units->unitid = md5($req->requestid);
@@ -330,5 +338,9 @@ class BkRequestController extends Controller
                             ->get();
      
         return  calendar($data);
+    }
+    public function test(){
+        $branchid = \Auth::user()->branch_id;
+        $branch = DB::table("branches")->where("id", $branchid )->pluck("seriesname")->first();
     }
 }
