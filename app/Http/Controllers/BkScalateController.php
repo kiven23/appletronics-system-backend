@@ -17,28 +17,64 @@ use App\BkNotify as notify;
 class BkScalateController extends Controller
 {
 
-   public function notify($id){
-  
+   public function notify($id, $logs){
+        $getBr = DB::table("bk_scalates")->where("id", $id)->pluck("branch")->first();
         $receiver = \Auth::user()->branch_id !== 5 ? 5: \Auth::user()->branch_id;
         $insert =  new notify;
         $insert->bsender_id = \Auth::user()->branch_id;
-        $insert->breceiver_id = $receiver;
+        if(\Auth::user()->branch_id == 5){
+          $insert->breceiver_id = $getBr;
+        }else{
+          $insert->breceiver_id = $receiver;
+        }
+  
         $insert->status = 0;
         $insert->event_id = $id;
+        $insert->event_logs = $logs;
         $insert->save();
      
    }
-   public function notification(){
+   public function notification(request $req){
+    if(@$req->q == 2){
+      return $this->index(2, $req->id);    
+    }
     $receiver = \Auth::user()->branch_id == 5 ? 5: \Auth::user()->branch_id;
     $data = DB::table('bk_notifies')
+                             ->select("bk_notifies.created_at",
+                                      "bk_notifies.status",
+                                      "event_logs",
+                                      "name",
+                                      "customername",
+                                      "categories","bk_notifies.event_id")
                              ->join("branches", "bk_notifies.bsender_id" , "=", "branches.id")
                              ->join("bk_scalates", "bk_notifies.event_id", "=", "bk_scalates.id")
-                             ->where('breceiver_id',  $receiver )
+                             ->where('breceiver_id',  $receiver)
+                             ->where('bk_notifies.status', 0)
+                             ->orderby('bk_notifies.id', 'DESC')
                              ->get();
-    return $data;
+     $d['count'] =  count($data);
+     $d['data']=$data;
+    return $d;
     }
-   public function index(){
-        $scalateData = DB::table("bk_scalates")->get();
+
+   
+   public function index($identify =null, $id = null){
+       
+        
+        if($identify == 2){
+          $scalateData = DB::table("bk_scalates")->where("id", $id)->get();
+          DB::table('bk_notifies')->where("event_id", $id)->where("breceiver_id", \Auth::user()->branch_id)->update([
+            'status'=> 1
+          ]);
+        }else{
+          if(\Auth::user()->branch_id == 5){
+               $scalateData = DB::table("bk_scalates")->get();
+             }else{
+               $scalateData = DB::table("bk_scalates")->where("branch", \Auth::user()->branch_id)->get();
+             }
+        }
+        
+         
         foreach($scalateData as $data){
             $scalateFData[] = ["data" => $data,
                        "threads" => DB::table("bk_scalate_updates")
@@ -83,7 +119,7 @@ class BkScalateController extends Controller
             $threads->from_by = \Auth::user()->id;
             $threads->save();
             $this->index();
-            $this->notify($create->id);
+            $this->notify($create->id,  $req->category);
         } if($req->identify == 2){
             $update = BkScalate::find($req->id);
             $update->categories = $req->category;
@@ -100,6 +136,7 @@ class BkScalateController extends Controller
             ->where("bk_scalate_updates.id",  $threads->id)
             ->get();
             $this->index();
+            $this->notify($req->id, $threads->threads);   
              return $out;
             
         }
@@ -119,6 +156,7 @@ class BkScalateController extends Controller
             ->leftJoin("users", "users.id","=", "bk_scalate_updates.from_by")
             ->where("bk_scalate_updates.id",  $threads->id)
             ->get();
+            $this->notify($req->id, $threads->threads);   
              return $out;
             
         }
@@ -139,6 +177,7 @@ class BkScalateController extends Controller
             ->leftJoin("users", "users.id","=", "bk_scalate_updates.from_by")
             ->where("bk_scalate_updates.id",  $threads->id)
             ->get();
+            $this->notify($req->id, $threads->threads);        
              return $out;
         }
         
@@ -157,13 +196,23 @@ class BkScalateController extends Controller
                 ->leftJoin("users", "users.id","=", "bk_scalate_updates.from_by")
                 ->where("bk_scalate_updates.id",  $threads->id)
                 ->get();
-       $this->notify($req->scalate_id);        
+       $this->notify($req->scalate_id, $req->thread);        
        return $out;
    }
    public function scalatecout(){
-        $total['pending'] =  BkScalate::all()->where("status", 1)->count();
-        $total['resolved'] =  BkScalate::all()->where("status", 2)->count();
-        $total['total'] =  BkScalate::all()->count();
+     if(\Auth::user()->branch_id == 5){
+       
+          $total['pending'] =  BkScalate::all()->where("status", 1)->count();
+          $total['resolved'] =  BkScalate::all()->where("status", 2)->count();
+          $total['total'] =  BkScalate::all()->count();
+        }else{
+          
+          $total['pending'] =  BkScalate::all()->where("status", 1)->where("branch", \Auth::user()->branch_id)->count();
+          $total['resolved'] =  BkScalate::all()->where("status", 2)->where("branch", \Auth::user()->branch_id)->count();
+          $total['total'] =  BkScalate::all()->where("status", 2)->where("branch", \Auth::user()->branch_id)->count();
+        }
+ 
         return  $total;
    }
+
 }
