@@ -76,7 +76,7 @@ class BkRequestController extends Controller
                 $RequestDATA->requestid = @$req->requestid;
                 $RequestDATA->requesttype = @$req->requestType;
                 $RequestDATA->customerid = @$CustomerDATA->id;
-                $CustomerDATA->landmark = @$req->landmark;
+                $RequestDATA->landmark = @$req->landmark;
                 $RequestDATA->bookby = @$req->bookby;
                 $RequestDATA->status = @$req->identify == 1? 0 : 5;
                 $RequestDATA->identify = @$req->requestType.'/'.@\Auth::user()->branch_id.'/'.@\Auth::user()->id;
@@ -130,7 +130,7 @@ class BkRequestController extends Controller
                     $units->unitcondition = @$data->unitcondition;
                     $units->wallfinish = @$data->wallfinish;
                     $units->warrantycondition = @$data->warrantycondition;
-                    $units->withpowersupply = @$data->withpowersupply;
+                    $units->withpowersupply = @$data->withpowersupply->value;
                      $units->save();
                     
                 }
@@ -153,19 +153,22 @@ class BkRequestController extends Controller
 
       if(\Auth::user()->Branch->id == 5){
         if(\Auth::user()->hasRole(['AREA1'])){
-            $region = 1;
+            $region = 8;
         }
         if(\Auth::user()->hasRole(['AREA2'])){
-            $region = 2;
+            $region = 9;
         }
         if(\Auth::user()->hasRole(['AREA3'])){
-            $region = 3;
+            $region = 10;
+        }
+        if(\Auth::user()->hasRole(['AREA4'])){
+            $region = 11;
         }
         if(\Auth::user()->hasRole(['AREASALL'])){
             $region = 4;
         }
         
-        $branches = DB::table("branches")
+       $branches = DB::table("branches")
                          ->where('region_id', $region)->pluck('id'); 
    
      return $data = BkRequest::with("customer")
@@ -198,13 +201,16 @@ class BkRequestController extends Controller
     public function count(){
         if(\Auth::user()->Branch->id== 5){
             if(\Auth::user()->hasRole(['AREA1'])){
-                $region = 1;
+                $region = 8;
             }
             if(\Auth::user()->hasRole(['AREA2'])){
-                $region = 2;
+                $region = 9;
             }
             if(\Auth::user()->hasRole(['AREA3'])){
-                $region = 3;
+                $region = 10;
+            }
+            if(\Auth::user()->hasRole(['AREA4'])){
+                $region = 11;
             }
             if(\Auth::user()->hasRole(['AREASALL'])){
                 $region = 4;

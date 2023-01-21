@@ -21,6 +21,7 @@ class Booking
         ||  $request->is('api/booking/scalate/create')
         ||  $request->is('api/booking/scalate/threads') ) {
         if (\Auth::user()->hasRole(['Booking Admin User',
+                                    'Booking Super User',
                                     'Booking Branch User'
                                      ])) {
             return $next($request);
