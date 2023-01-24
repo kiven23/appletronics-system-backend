@@ -167,8 +167,8 @@ class BkRequestController extends Controller
         if(\Auth::user()->hasRole(['AREASALL'])){
             $region = 4;
         }
-        
-       $branches = DB::table("branches")
+        return $region;
+         $branches = DB::table("branches")
                          ->where('region_id', $region)->pluck('id'); 
    
      return $data = BkRequest::with("customer")
@@ -257,13 +257,7 @@ class BkRequestController extends Controller
     }
 
     public function action(request $req){
-        $update = BkRequest::where("requestid", $req->data['requestID'])->first();
-        $update->status = 1;
-        $update->callid = @$req->data['callid'];
-        $update->installer = @$req->data['installer'];
-        $update->installationdate = @$req->data['installationData'];
-        $update->update();
-        return "";
+    
       try{
         if($req->data['status'] == 'Unassigned'){
             $status = 0;
