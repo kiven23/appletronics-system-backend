@@ -21,12 +21,12 @@ class BkRequestController extends Controller
             $check = BkCustomerHistory::where("cpnumber", $req->cpnumber)->pluck('id')->first();
             if(!$check){
                 $CustomerDATA = new BkCustomerHistory();
-                $CustomerDATA->firstname =  @$req->firstname;
-                $CustomerDATA->lastname  = @$req->lastname;
-                $CustomerDATA->middlename  = @$req->middlename;
+                $CustomerDATA->firstname =  ucfirst(@$req->firstname);
+                $CustomerDATA->lastname  = ucfirst(@$req->lastname);
+                $CustomerDATA->middlename  = ucfirst(@$req->middlename);
                 $CustomerDATA->barangay  = @$req->barangay;
                 $CustomerDATA->contactperson = @$req->contactperson;
-                $CustomerDATA->cpnumber = @$req->cpnumber;
+                $CustomerDATA->cpnumber = '+63'.@$req->cpnumber;
                 $CustomerDATA->emailaddress = @$req->emailaddress;
                  
                 $CustomerDATA->houseno = @$req->houseno;
@@ -47,12 +47,12 @@ class BkRequestController extends Controller
         try{
             if(!$checkData){
                 $CustomerDATA = new BkCustomerInfo();
-                $CustomerDATA->firstname =  @$req->firstname;
-                $CustomerDATA->lastname  = @$req->lastname;
-                $CustomerDATA->middlename  = @$req->middlename;
+                $CustomerDATA->firstname = ucfirst(@$req->firstname);
+                $CustomerDATA->lastname  = ucfirst(@$req->lastname);
+                $CustomerDATA->middlename  = ucfirst(@$req->middlename);
                 $CustomerDATA->barangay  = @$req->barangay;
                 $CustomerDATA->contactperson = @$req->contactperson;
-                $CustomerDATA->cpnumber = @$req->cpnumber;
+                $CustomerDATA->cpnumber = '+63'.@$req->cpnumber;
                 $CustomerDATA->emailaddress = @$req->emailaddress;
                 $CustomerDATA->houseno = @$req->houseno;
                 $CustomerDATA->mcity = @$req->mcity;
@@ -100,7 +100,7 @@ class BkRequestController extends Controller
 
                 $branchid = \Auth::user()->branch_id;
                 $branch = DB::table("branches")->where("id", $branchid)->pluck("seriesname")->first();
-                $ticketno = $branch.'-'.sprintf("%06s", $RequestDATA->id);
+                $ticketno = substr($branch,0,5).'-'.sprintf("%06s", $RequestDATA->id);
                 DB::table("bk_requests")->where("id", $RequestDATA->id)->update([
                     "ticketno" => $ticketno
                 ]);
@@ -167,11 +167,11 @@ class BkRequestController extends Controller
         if(\Auth::user()->hasRole(['AREASALL'])){
             $region = 4;
         }
-        return $region;
+       
          $branches = DB::table("branches")
                          ->where('region_id', $region)->pluck('id'); 
    
-     return $data = BkRequest::with("customer")
+       $data = BkRequest::with("customer")
                 ->with("user")
                 ->with("branch")
                 ->with("units")
@@ -289,9 +289,8 @@ class BkRequestController extends Controller
         $path = BkRequest::where('id', $req->id)
                 ->pluck("attachment")
                 ->first();
-        $file = '../storage/app/'.$path;
+         $file = '../storage/app/'.$path;
         return response()->download($file);
-     
     }
     public function restore(request $req){
         function ex($e){
