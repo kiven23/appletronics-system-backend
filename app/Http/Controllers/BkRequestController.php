@@ -51,16 +51,16 @@ class BkRequestController extends Controller
                 $CustomerDATA->lastname  = ucfirst(@$req->lastname);
                 $CustomerDATA->middlename  = ucfirst(@$req->middlename);
                 $CustomerDATA->barangay  = @$req->barangay;
-                $CustomerDATA->contactperson = @$req->contactperson;
+                $CustomerDATA->contactperson = @$req->contactperson? @$req->contactperson : 'N/A';
                 $CustomerDATA->cpnumber = '+63'.@$req->cpnumber;
-                $CustomerDATA->emailaddress = @$req->emailaddress;
-                $CustomerDATA->houseno = @$req->houseno;
-                $CustomerDATA->mcity = @$req->mcity;
-                $CustomerDATA->organization = @$req->organization;
-                $CustomerDATA->province = @$req->province;
-                $CustomerDATA->specialinstruction = @$req->specialinstruction;
-                $CustomerDATA->street = @$req->street;
-                $CustomerDATA->telephoneno = @$req->telephoneno;
+                $CustomerDATA->emailaddress = @$req->emailaddress?@$req->emailaddress : 'N/A';
+                $CustomerDATA->houseno = @$req->houseno?@$req->houseno : 'N/A';
+                $CustomerDATA->mcity = @$req->mcity? @$req->mcity : 'N/A';
+                $CustomerDATA->organization = @$req->organization? @$req->organization : 'N/A';
+                $CustomerDATA->province = @$req->province? @$req->province : 'N/A';
+                $CustomerDATA->specialinstruction = @$req->specialinstruction? @$req->specialinstruction : 'N/A';
+                $CustomerDATA->street = @$req->street?@$req->street : 'N/A';
+                $CustomerDATA->telephoneno = @$req->telephoneno?@$req->telephoneno : 'N/A';
                 $CustomerDATA->save();
                 
                 if(@$req->file("attachment")){
@@ -86,11 +86,11 @@ class BkRequestController extends Controller
                 $RequestDATA->attachment = @$path;
 
                 //LOCATION UNIT  
-                $RequestDATA->locandorg = @$req->locanorg;
+                $RequestDATA->locandorg = @$req->locanorg? @$req->locanorg :'N/A';
                 // AND NAME OF ORGANIZATION
-                $RequestDATA->organizationname = @$req->orgname;
+                $RequestDATA->organizationname = @$req->orgname? @$req->orgname : 'N/A' ;
                 //SURVEY LOCATION
-                $RequestDATA->surveyloc = @$req->surveylocation;
+                $RequestDATA->surveyloc = @$req->surveylocation? @$req->surveylocation : 'N/A';
 
                 $RequestDATA->additionalrequest1 = @$req->additionalrequest1;
                 $RequestDATA->additionalrequest2 = @$req->additionalrequest2;
@@ -100,7 +100,7 @@ class BkRequestController extends Controller
 
                 $branchid = \Auth::user()->branch_id;
                 $branch = DB::table("branches")->where("id", $branchid)->pluck("seriesname")->first();
-                $ticketno = substr($branch,0,5).'-'.sprintf("%06s", $RequestDATA->id);
+                $ticketno = substr($branch,0,4).'-'.sprintf("%06s", $RequestDATA->id);
                 DB::table("bk_requests")->where("id", $RequestDATA->id)->update([
                     "ticketno" => $ticketno
                 ]);
@@ -184,6 +184,7 @@ class BkRequestController extends Controller
                 }
                 )
                 ->where("status",  $status)
+                ->orderby("updated_at","DESC")
             ->get();
       }else{
          $data = BkRequest::with("customer")
@@ -193,6 +194,7 @@ class BkRequestController extends Controller
         ->with("BkJobsUpdate")
         ->where("status", $status)
         ->where("branch", \Auth::user()->Branch->id)
+        ->orderby("updated_at","DESC")
         ->get();
       }
      return $data;
