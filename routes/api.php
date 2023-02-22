@@ -360,7 +360,10 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
 	//ADMIN ONLY ACCESS
 	//ACTIONS
 	Route::post('/jobs/action', 'BkRequestController@action')->name('app.booking.system.action');
-	
+	//TRASH
+	Route::post('/jobs/trash', 'BkRequestController@trash')->name('app.booking.system.trash');
+
+
 	//SCALATE 
 
 	Route::post('/scalate/index', 'BkScalateController@index')->name('app.booking.system.jobs.scalate');
@@ -369,11 +372,11 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
 	//BRANCH IN ADMIN ACCESS
 	//JOBSUPDATE
 	Route::post('/jobs/jobsupdate', 'BkJobsUpdateController@jobsupdate')->name('app.booking.system.jobs.update');
-
 	//Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->name('app.booking.system.jobs.calendarschedule');
  });
 Route::get('/notification', 'BkScalateController@notification')->name('app.booking.system.jobs.scalate.notify');
 Route::get('/scalate/count', 'BkScalateController@scalatecout')->name('app.scalatecount');
 Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->name('app.booking.system.jobs.calendarschedule');
 Route::get('/jobs/customers/list', 'BkScalateController@customerList')->name('app.booking.system.jobs.customerList');
-Route::get('/random/test', 'BkRequestController@test')->name('app.scalatecount.test');
+
+Route::get('/random/exec', 'BkRequestController@exec')->name('app.scalatecount.exec');

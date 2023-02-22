@@ -39,6 +39,17 @@ class Booking
                 }
         
         }  
+        //DELETE JOBS
+        if ($request->is('api/booking/jobs/trash')) {
+            if (\Auth::user()->hasRole(['Booking Admin User',
+                                         'Booking Super User' 
+             ])) {
+                return $next($request);
+            } else {
+                abort('403');
+            }
+    
+    }  
 
         //RESTORE
             if ($request->is('api/booking/restore')) {
