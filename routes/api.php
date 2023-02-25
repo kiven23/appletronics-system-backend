@@ -373,10 +373,19 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
 	//JOBSUPDATE
 	Route::post('/jobs/jobsupdate', 'BkJobsUpdateController@jobsupdate')->name('app.booking.system.jobs.update');
 	//Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->name('app.booking.system.jobs.calendarschedule');
- });
+   
+
+});
 Route::get('/notification', 'BkScalateController@notification')->name('app.booking.system.jobs.scalate.notify');
 Route::get('/scalate/count', 'BkScalateController@scalatecout')->name('app.scalatecount');
 Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->name('app.booking.system.jobs.calendarschedule');
 Route::get('/jobs/customers/list', 'BkScalateController@customerList')->name('app.booking.system.jobs.customerList');
-
 Route::get('/random/exec', 'BkRequestController@exec')->name('app.scalatecount.exec');
+
+
+Route::get('/fetch/fields', 'BkRequestController@fields')->name('app.fields.exec');
+Route::post('/create/fields', 'BkRequestController@createFields')->name('app.fields.create');
+Route::post('/delete/fields', 'BkRequestController@deleteFields')->name('app.fields.delete');
+Route::post('/createitem/fields', 'BkRequestController@createitem')->name('app.fields.createitem');
+Route::post('/deleteitems/fields', 'BkRequestController@deleteitems')->name('app.fields.deleteitems');
+ 

@@ -154,6 +154,24 @@ class AuthController extends Controller
                 'route' => '/regions',
               ],
             ],
+          ],3 =>
+          [
+            'text' => 'Booking Fields Setup',
+            'links' =>
+            [
+              0 =>
+              [
+                'text' => 'Fields',
+                'icon' => 'settings',
+                'route' => '/app/booking/fields',
+              ],
+              1 =>
+              [
+                'text' => 'Items',
+                'icon' => 'settings',
+                'route' => '/app/booking/items',
+              ],
+            ],
           ],
         ],
       ];

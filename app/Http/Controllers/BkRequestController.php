@@ -505,10 +505,11 @@ class BkRequestController extends Controller
     
         foreach($json_object  as $res){
             if(@$res->nomodel == 1){
-                foreach($res->Brand2 as $brand){
-                    DB::table("bk_brand")->insert([
+                foreach($res->cat as $brand){
+                    DB::table("bk_categories")->insert([
                         "name" => @$brand->name,
                         "value"=> @$brand->value,
+                        "identity" => 2
                      ]);
                 }
                 
@@ -516,6 +517,119 @@ class BkRequestController extends Controller
               
         }
         return 'ok';
+    }
+    public function fields(request $req){
+        if($req->list == 1){
+            if($req->id == 4){
+            return DB::table("bk_items")->get();
+         
+            }else{
+                $type = DB::table("bk_types")->where('identity', $req->id) ->latest()->get(); 
+                $brand = DB::table("bk_brand")->where('identity', $req->id) ->latest()->get();
+                $cat = DB::table("bk_categories")->where('identity', $req->id) ->latest()->get();
+                
+                $type_array = $type->toArray();
+                $brand_array = $brand->toArray();
+                $cat_array = $cat->toArray();
+                 
+                $arr = array_merge($type_array,$brand_array,$cat_array);
+                return $arr;
+            }
+        }
+        if($req->list == 2){
+            $type = DB::table("bk_types") ->latest()->get(); 
+            $brand = DB::table("bk_brand") ->latest()->get();
+            $cat = DB::table("bk_categories") ->latest()->get();
+            $arr = [
+                "type"=> $type,
+                "brand"=>  $brand,
+                "cat"=>  $cat,
+            ];
+            return $arr;
+        }
+     
+    }
+     
+    public function createFields(request $req){
+        #FOR TYPE
+        if($req->type == 1){
+           $table = "bk_types";
+        }
+        #FOR CAT
+        if($req->type == 2){
+            $table = "bk_brand";
+        }
+        #FOR BRAND
+        if($req->type == 3){
+            $table = "bk_categories";
+        }
+        if($req->identify == 0){
+            DB::table($table)->insert([
+                "name"=> $req->fields,
+                "value"=> $req->fields,
+                "identity"=> $req->type,
+                "created_at"=> date("Y-m-d h:i:s")
+            ]);
+        }
+        if($req->identify == 1){
+            DB::table($table)->where("id",$req->id)->update([
+                "name"=> $req->fields,
+                "value"=> $req->fields,
+                "identity"=> $req->type,
+                "created_at"=> date("Y-m-d h:i:s")
+            ]);
+        }
+
+         
+
+
+        return "OK";
+    }
+     
+    public function deleteitems(request $req){
+        DB::table('bk_items')->where("id", $req->id)->delete();
+        return "ok";
+    }
+    public function deleteFields(request $req){
+         #FOR TYPE
+         if($req->type == 1){
+            $table = "bk_types";
+         }
+         #FOR CAT
+         if($req->type == 2){
+             $table = "bk_brand";
+         }
+         #FOR BRAND
+         if($req->type == 3){
+             $table = "bk_categories";
+         }
+         DB::table($table)->where("id", $req->id)->delete();
+        return "ok";
+    }
+    public function createitem(request $req){
         
+        if($req->model){
+            if($req->identify == 0){
+                DB::table("bk_items")->insert([
+                    "Brand" => $req->brand,
+                    "categories" => $req->cat,
+                    "type" => $req->type,
+                    "model" => $req->model
+                ]);
+            }
+            if($req->identify == 1){
+                DB::table("bk_items")->where('id', $req->id)->update([
+                    "Brand" => $req->brand,
+                    "categories" => $req->cat,
+                    "type" => $req->type,
+                    "model" => $req->model
+                ]);
+            }
+            
+            $msg = 'ok';
+        }else{
+            $msg = 'required fields';
+        }
+        return "ok";
     }
 }
