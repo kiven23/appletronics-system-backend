@@ -14,7 +14,7 @@ use App\BkCustomerHistory;
 use hash;
 use GuzzleHttp\Client;
 use App\user;
- 
+use DateTime;
 class BkRequestController extends Controller
 {
     public function history($req){
@@ -146,61 +146,71 @@ class BkRequestController extends Controller
     }
     public function jobs(request $req){
 
-      if(@$req->id){
-            $status = @$req->id;
-      }else{
-            $status = 0;
-      }
+            if(@$req->id){
+                   if($req->id == 3){
+                    $status = 10;
+                   }else{
+                    $status = @$req->id;
+                   }
+                     
+            }else{
+                    $status = 0;
+            }
 
-      $this->syncSapBookingSched();
+            //$this->syncSapBookingSched();
 
-      if(\Auth::user()->Branch->id == 5){
-        if(\Auth::user()->hasRole(['AREA1'])){
-            $region = 8;
-        }
-        if(\Auth::user()->hasRole(['AREA2'])){
-            $region = 9;
-        }
-        if(\Auth::user()->hasRole(['AREA3'])){
-            $region = 10;
-        }
-        if(\Auth::user()->hasRole(['AREA4'])){
-            $region = 11;
-        }
-        if(\Auth::user()->hasRole(['AREASALL'])){
-            $region = 4;
-        }
-       
-         $branches = DB::table("branches")
-                         ->where('region_id', $region)->pluck('id'); 
-   
-       $data = BkRequest::with("customer")
+            if(\Auth::user()->Branch->id == 5){
+                if(\Auth::user()->hasRole(['AREA1'])){
+                    $region = 8;
+                }
+                if(\Auth::user()->hasRole(['AREA2'])){
+                    $region = 9;
+                }
+                if(\Auth::user()->hasRole(['AREA3'])){
+                    $region = 10;
+                }
+                if(\Auth::user()->hasRole(['AREA4'])){
+                    $region = 11;
+                }
+                if(\Auth::user()->hasRole(['AREASALL'])){
+                    $region = 4;
+                }
+            
+                $branches = DB::table("branches")
+                                ->where('region_id', $region)->pluck('id'); 
+
+                   $data = BkRequest::with(['customer'=> function($q){
+                    $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+                  }])
+                        ->with("user")
+                        ->with("branch")
+                        ->with("units")
+                        ->with("BkJobsUpdate")
+                        ->where(function ($query) use($branches, $region) {
+                            if($region !== 4){
+                                for ($i = 0; $i < count($branches); $i++){
+                                    $query->orwhere('branch',   $branches[$i]);
+                                }}
+                        }
+                        )
+                        ->where("status",  $status)
+                        ->orderby("updated_at","DESC")
+                    ->get();
+            }else{
+                $data = BkRequest::with(['customer'=> function($q){
+                    $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+                  }])
                 ->with("user")
                 ->with("branch")
                 ->with("units")
                 ->with("BkJobsUpdate")
-                ->where(function ($query) use($branches, $region) {
-                    if($region !== 4){
-                        for ($i = 0; $i < count($branches); $i++){
-                            $query->orwhere('branch',   $branches[$i]);
-                        }}
-                }
-                )
-                ->where("status",  $status)
+                ->where("status", $status)
+                ->where("branch", \Auth::user()->Branch->id)
                 ->orderby("updated_at","DESC")
-            ->get();
-      }else{
-         $data = BkRequest::with("customer")
-        ->with("user")
-        ->with("branch")
-        ->with("units")
-        ->with("BkJobsUpdate")
-        ->where("status", $status)
-        ->where("branch", \Auth::user()->Branch->id)
-        ->orderby("updated_at","DESC")
-        ->get();
-      }
-     return $data;
+                ->get();
+            }
+            return $data;
+   
     }
     public function count(){
         if(\Auth::user()->Branch->id== 5){
@@ -249,17 +259,27 @@ class BkRequestController extends Controller
                         $query->orwhere('branch',   $branches[$i]);
                     }}
             })->get();
+            $REJECTED = DB::table("bk_requests")->where("status", 10)
+            ->where(function ($query) use($branches, $region) {
+                if($region !== 4){
+                    for ($i = 0; $i < count($branches); $i++){
+                        $query->orwhere('branch',   $branches[$i]);
+                    }}
+            })->get();
             $ARRAYDATA = ["unsigned"=>count($UNSIGM),
                             "accepted"=> count($ACCEPTED),
-                            "asc"=>count($ASC)];
+                            "asc"=>count($ASC),
+                            "rejected"=>count($REJECTED)];
 
         }else{
             $UNSIGM = DB::table("bk_requests")->where("status", 0)->where("branch", \Auth::user()->Branch->id)->get();
             $ACCEPTED = DB::table("bk_requests")->where("status", 1)->where("branch", \Auth::user()->Branch->id)->get();
             $ASC = DB::table("bk_requests")->where("status", 2)->where("branch", \Auth::user()->Branch->id)->get();
+            $REJECTED = DB::table("bk_requests")->where("status", 10)->where("branch", \Auth::user()->Branch->id)->get();
             $ARRAYDATA = ["unsigned"=>count($UNSIGM),
                             "accepted"=> count($ACCEPTED),
-                            "asc"=>count($ASC)];
+                            "asc"=>count($ASC),
+                            "rejected"=>count($REJECTED)];
         }
        return $ARRAYDATA;
     }
@@ -267,22 +287,22 @@ class BkRequestController extends Controller
     public function action(request $req){
     
       try{
-        if($req->data['status'] == 'Unassigned'){
-            $status = 0;
-        }
-        if($req->data['status'] == 'Accepted'){
-            $status = 1;
-        }
-        if($req->data['status'] == 'Dispatch to Other ASC'){
-            $status = 2;
-        }
+        // if($req->data['status'] == 'Unassigned'){
+        //     $status = 0;
+        // }
+        // if($req->data['status'] == 'Accepted'){
+        //     $status = 1;
+        // }
+        // if($req->data['status'] == 'Dispatch to Other ASC'){
+        //     $status = 2;
+        // }
         $update = BkRequest::where("requestid", $req->data['requestID'])->first();
-        $update->status = $status;
+        $update->status = 0;
         $update->callid = $req->data['callid'];
-        $update->installer = $req->data['installer'];
-        $update->installationdate = $req->data['installationData'];
-        $update->update();
-        $msg = ["msg"=> 'Job '.$req->data['requestID'].' Success Update to '.$req->data['status'], "error"=> 'success', "type"=>1];
+       // $update->installer = $req->data['installer'];
+        //$update->installationdate = $req->data['installationData'];
+         $update->update();
+       $msg = ["msg"=> 'Job '.$req->data['requestID'].' Success Updated', "error"=> 'success', "type"=>1];
        }catch(\Exception $e){
         $msg = ["msg"=>  $e, "error"=> 'error'];
        }
@@ -319,33 +339,93 @@ class BkRequestController extends Controller
     }
 
     public function calendarschedule(){
-        
+
+    //    return $dataD = BkRequest::with("customer")
+    //     ->with("user")
+    //     ->with("units")
+    //     ->with("BkJobsUpdate")
+    //     ->with("branch")
+    //     ->whereNotNull("branch")
+    //     ->whereHas("branch", function($query)  {
+    //         $query->where("id", 47);
+    //     })
+    //     ->get();
+
+       // Get the name of the branch for the current user
+       #47 alexander
+        $branchName = \Auth::user()->branch->id;  
         function calendar($sch){
               
             foreach($sch as $ds){
-                $detail = ["requestid"=> $ds->requestid,
-                           "callid"=> $ds->callid,
-                           "customer"=> $ds->customer];
-                $schedules[] = [
-                 "name"=> $ds->requesttype.' - '. $ds->customer->lastname .', '. $ds->customer->firstname,
-                 "start"=> $ds->installationdate, 
-                 "color"=> "green", 
-                 "timed"=> true, 
-                 "details"=> $detail];
+                  if($ds->installationdate){
+                    $detail = ["requestid"=> $ds->requestid,
+                    "callid"=> $ds->callid,
+                    "customer"=> $ds->customer];
+                    $schedules[] = [
+                    "name"=> $ds->requesttype.' - '. $ds->customer->lastname .', '. $ds->customer->firstname,
+                    "start"=> $ds->installationdate, 
+                    "color"=> "green", 
+                    "timed"=> true, 
+                    "details"=> $detail,
+                    "UID"=>$ds->callID];
+                 }
+ 
             }
            return $schedules;
            
         }
+ 
+         $branchName = \Auth::user()->branch->id;
+        if(\Auth::user()->Branch->id == 5){  
+           $data = BkRequest::with("customer")
+                ->with("user")
+                ->with("units")
+                ->with("branch")
+                ->with("BkJobsUpdate")
+                ->where("status", 1)
+                ->orWhere("status", 2)
+                ->whereNotNull("installationdate")
+                ->get();
+        }else{
+        //     $dataD = BkRequest::with("customer")
+        //     ->with("user")
+        //     ->with("units")
+        //     ->with("BkJobsUpdate")
+        //     ->with(["branch"=> function($d){
+        //         $d->where('id', 47);
+                
+        //     }])
+        //     ->whereNotNull("branch")
+        //     // ->where(function($query) use ($branchName) {
+        //     //     $query->where("status", 1)
+        //     //         ->orWhere("status", 2)
+        //     //         ->whereNotNull("installationdate")
+        //     //         ->whereHas("branch", function($q) use ($branchName) {
+        //     //             $q->where("SAP_BRANCH", $branchName);
+        //     //         });
+        //     // }) 
+        // ->get();
+
+
         $data = BkRequest::with("customer")
-                            ->with("user")
-                            ->with("branch")
-                            ->with("units")
-                            ->with("BkJobsUpdate")
-                            ->where("status", 1)
-                            ->whereNotNull("installationdate")
-                            ->get();
-     
-      $sched1 = calendar($data);
+        ->with("user")
+        ->with("units")
+        ->with("BkJobsUpdate")
+        ->with("branch")
+   
+        ->whereNotNull("branch")
+        ->whereHas("branch", function($query)use($branchName)  {
+            $query->where("id", $branchName);
+        })
+ 
+        ->get();
+
+
+
+        
+        }
+      
+       return $sched1 = calendar($data);
 
 
         function calendar1($sch){
@@ -376,34 +456,71 @@ class BkRequestController extends Controller
                 "start"=> date_format( $schedule, "Y-m-d"), 
                  "color"=> "green", 
                  "timed"=> true, 
-                 "details"=> $detail];
+                 "details"=> $detail,
+                 "UID"=>$ds->callID];
             }
            return $schedules;
            
         }
-     $db =  DB::connection("sqlsrv3")->table("OSCL")
-          ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
-          ->select(\DB::raw("OINS.custmrName as CustomerName"), 
-                         "OINS.street as contactnumber",
-                         "OINS.zip as zip",
-                         "OINS.city as city",
-                         "OINS.country as country",
-                         "OINS.state as state",
-                         "OSCL.U_SchedDate as U_SchedDate",
-                         "OSCL.callID as callID",
-                         "OSCL.subject as subject",
-          )
-          ->whereNotNull('OSCL.U_SchedDate')
-          // ->whereYear("OSCL.U_SchedDate", '2023')
-          //->whereMonth("OSCL.U_SchedDate", '>=','08')
-          ->latest("OSCL.U_SchedDate")
-          ->take(100)
-          ->get();
+         #LATES FUNCTION TO FILTER BRANCHES SCHEDULE
+        return $sched1;
+
+        if(\Auth::user()->Branch->id == 5){
+            // Define the SQL query using Laravel's Query Builder
+            $db = DB::connection("sqlsrv3")->table("OSCL")
+                ->selectRaw("OINS.custmrName as CustomerName, 
+                            OINS.street as contactnumber,
+                            OINS.zip as zip,
+                            OINS.city as city,
+                            OINS.country as country,
+                            OINS.state as state,
+                            OSCL.U_SchedDate as U_SchedDate,
+                            OSCL.callID as callID,
+                            OSCL.subject as subject,
+                            OCRG.GroupName as branch")
+                ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
+                ->join("OCRD", "OSCL.customer", "=", "OCRD.cardcode")
+                ->join("OCRG", "OCRD.GroupCode", "=", "OCRG.GroupCode")
+                ->whereNotNull('OSCL.U_SchedDate')
+                //->where("OCRG.GroupName", "LIKE", '%'.$branchName.'%')
+                ->latest("OSCL.U_SchedDate")
+                ->take(500)
+                ->get();
+        }else{
+            // Define the SQL query using Laravel's Query Builder
+            $db = DB::connection("sqlsrv3")->table("OSCL")
+                ->selectRaw("OINS.custmrName as CustomerName, 
+                            OINS.street as contactnumber,
+                            OINS.zip as zip,
+                            OINS.city as city,
+                            OINS.country as country,
+                            OINS.state as state,
+                            OSCL.U_SchedDate as U_SchedDate,
+                            OSCL.callID as callID,
+                            OSCL.subject as subject,
+                            OCRG.GroupName as branch")
+                ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
+                ->join("OCRD", "OSCL.customer", "=", "OCRD.cardcode")
+                ->join("OCRG", "OCRD.GroupCode", "=", "OCRG.GroupCode")
+                ->whereNotNull('OSCL.U_SchedDate')
+                 ->where("OCRG.GroupName", "LIKE", '%'.$branchName.'%')
+                ->latest("OSCL.U_SchedDate")
+                ->take(500)
+                ->get();
+        }
+
+    
+    
     $sched2 = calendar1($db);
-    return array_merge($sched1, $sched2);
+    return  array_merge($sched1, $sched2);
+ 
     }
     public function syncSapBookingSched(){
         
+        
+ 
+ 
+ 
         function calendar($sch){
               
             foreach($sch as $ds){
@@ -437,10 +554,12 @@ class BkRequestController extends Controller
            return $schedules;
            
         }
-         //$db =  DB::connection("sqlsrv3")->table("OSCL")->take(10)->get();
-         $db =  DB::connection("sqlsrv3")->table("OSCL")
+        function sapDataConnect($callid){
+            $dd = DB::connection("sqlsrv3")->table("OSCL")
                 ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
-                ->join("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
+                ->leftjoin("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
+                ->join("OCLG", 'OSCL.callID', '=', 'OCLG.parentId' )
+                ->join("UFD1", 'OSCL.U_CallStatusReason', '=', 'UFD1.FldValue')
                 ->select(\DB::raw("OINS.custmrName as CustomerName"), 
                                 "OINS.street as contactnumber",
                                 "OINS.zip as zip",
@@ -448,26 +567,136 @@ class BkRequestController extends Controller
                                 "OINS.country as country",
                                 "OINS.state as state",
                                 "OSCL.U_SchedDate as U_SchedDate",
+                                "OSCL.U_comTime as comTime",
                                 "OSCL.callID as callID",
                                 "OHEM.lastName as techL",
-                                "OHEM.firstName as techF"             
+                                "OHEM.firstName as techF",
+                                "OSCL.U_CallStatusReason as Stat",
+                                "UFD1.Descr as reason",
+                                "OCLG.Notes"           
                 )
-                ->whereNotNull('OSCL.U_SchedDate')
-                ->latest("OSCL.U_SchedDate")
-                ->take(100)
-                // ->whereYear("OSCL.U_SchedDate", '2022')
+                //->latest("OSCL.U_SchedDate")
+                ->where("OSCL.callID", $callid)
+                ->first();
+            if($dd){
+                return $dd; 
+            } 
+        }
+       
+        # NEW CODE =========================================
+       $callID  =  DB::table("bk_requests")->whereNotNull("callid")->select("callid")->get()->toArray();
+        $sapData = array_filter(array_map(function($sData) {
+            return sapDataConnect($sData->callid);
+        }, $callID));
+       $db = array_filter($sapData);
+        #END CODE =========================================
+        //return  $db =  DB::connection("sqlsrv3")->table("OSCL")->take(100)->get();
+        // $db =  DB::connection("sqlsrv3")->table("OSCL")
+        //         ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
+        //         ->join("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
+        //         ->join("OCLG", 'OSCL.callID', '=', 'OCLG.parentId' )
+        //         ->select(\DB::raw("OINS.custmrName as CustomerName"), 
+        //                         "OINS.street as contactnumber",
+        //                         "OINS.zip as zip",
+        //                         "OINS.city as city",
+        //                         "OINS.country as country",
+        //                         "OINS.state as state",
+        //                         "OSCL.U_SchedDate as U_SchedDate",
+        //                         "OSCL.callID as callID",
+        //                         "OHEM.lastName as techL",
+        //                         "OHEM.firstName as techF",
+        //                         "OSCL.U_CallStatusReason as Stat",
+        //                         "OCLG.Notes"           
+        //         )
+                //->whereNotNull('OSCL.U_SchedDate')
+                 //->latest("OSCL.U_SchedDate")
+                 //->whereYear("OSCL.U_SchedDate", '2023')
+                // ->take(150000)
+                // ->where("OSCL.callID", '120124')
+                  
                 // ->whereMonth("OSCL.U_SchedDate", '>=','08')
-                ->get();
-          
+                //->get();
 
+       
+   function Times($time){
+    if($time){
+        return  \Carbon\Carbon::parse(sprintf("%04d", $time))->format('H:i');
+    }else{
+        return NULL;
+    }
+   }
+  
+   
+  //.''.Times($up->comTime)
+    
     foreach($db as $up){
-        $createDate = date_create($up->U_SchedDate);
-        $schedule = date_format($createDate, "Y-m-d");
+       
+        if($up->U_SchedDate){
+            $createDate = date_create($up->U_SchedDate);
+            $schedule = date_format($createDate, "Y-m-d");
+        }else{
+            
+            $schedule = NULL;
+        }
+        // $createDate = date_create($up->U_SchedDate);
+        // $schedule = date_format($createDate, "Y-m-d");
         $technician = strtoupper($up->techL.', '.$up->techF);
-        DB::table("bk_requests")->where("callid", $up->callID)->update([
-                'installationdate' => $schedule,
-                'installer'=> $technician
-        ]) ;  
+        // DB::table("bk_requests")->where("callid", $up->callID)->update([
+        //         'installationdate' => $schedule,
+        //         'installer'=> $technician,
+        //         'notes'=> $up->Notes
+        // ]) ;  
+        
+        #FORACCEPT
+        if($schedule && $technician && $up->Stat !== 'Closed07'){
+              DB::table("bk_requests")->where("callid", $up->callID)->update([
+                      'installationdate' => $schedule ,
+                      'installer'=> $technician,
+                      'notes'=> $up->Notes,
+                      'status'=> 1, 
+                      'reason'=> $up->reason
+        ]) ; 
+        #FOR UNASSIGNED
+        }else{
+            DB::table("bk_requests")->where("callid", $up->callID)->update([
+                'installationdate' => $schedule ,
+                'installer'=> $technician,
+                'notes'=> $up->Notes,
+                'status'=> 0,
+                'reason'=> $up->reason
+            ]) ;  
+        }
+        #FOR ASC DISPATCH
+        if($up->Stat == 'Pending05'){
+            DB::table("bk_requests")->where("callid", $up->callID)->update([
+                'installationdate' => $schedule ,
+                'installer'=> $technician,
+                'notes'=> $up->Notes,
+                'status'=> 2,
+                'reason'=> $up->reason
+            ]) ;  
+        }
+        #FOR REJECTION
+        if($up->Stat == 'Closed07'){
+            DB::table("bk_requests")->where("callid", $up->callID)->update([
+                'installationdate' => $schedule ,
+                'installer'=> $technician,
+                'notes'=> $up->Notes,
+                'status'=> 10,
+                'reason'=> $up->reason
+            ]) ;  
+        }
+ 
+        // if($up->Stat == 'Pending05'){
+        //     DB::table("bk_requests")->where("callid", $up->callID)->update([
+        //         'status' => 2,
+        //     ]) ; 
+        // }else{
+        //     DB::table("bk_requests")->where("callid", $up->callID)->update([
+        //         'status' => 1,
+        //     ]) ; 
+        // }
+ 
     }
     return 'ok';
            
@@ -631,5 +860,56 @@ class BkRequestController extends Controller
             $msg = 'required fields';
         }
         return "ok";
+    }
+    public function execute(){
+        $full_link = 'http://192.168.1.19:8012/api2/all.json';
+        $unparsed_json = file_get_contents($full_link);
+        $json_object = json_decode($unparsed_json);
+    
+        foreach($json_object  as $res){
+          DB::Table("bk_items")->insert([
+           
+            "Brand"=>@$res->Brand,
+            "categories"=>@$res->categories,
+            "type"=>@$res->type,
+            "model"=>@$res->model,
+            "SQM"=>@$res->SQM
+          ]);
+              
+        }
+        return 'ok';
+        return  $db =  DB::connection("sqlsrv3")->table("OSCL")->where('U_CallStatusReason', "Pending05")->get();
+    }
+    public function testDb(){
+    // return  DB::connection("sqlsrv3")->table("UFD1")->where("TableID", "ASCL")->get();
+    
+     return $this->syncSapBookingSched();
+    return   DB::connection("sqlsrv3")->table("OSCL")
+       ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
+       ->join("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
+       ->join("OCLG", 'OSCL.callID', '=', 'OCLG.parentId' )
+       ->join("UFD1", 'OSCL.U_CallStatusReason', '=', 'UFD1.FldValue')
+       ->select(\DB::raw(
+                       "OINS.custmrName as CustomerName"),   
+                       "OINS.street as contactnumber",
+                       "OINS.zip as zip",
+                       "OINS.city as city",
+                       "OINS.country as country",
+                       "OINS.state as state",
+                       "OSCL.U_SchedDate as U_SchedDate",
+                       "OSCL.callID as callID",
+                       "OHEM.lastName as techL",
+                       "OHEM.firstName as techF",
+                       "OSCL.U_CallStatusReason as Stat" ,
+                       "UFD1.Descr as reason",
+                        "OCLG.Notes"            
+       )
+      // ->whereNull('OSCL.U_SchedDate')
+      // ->latest("OSCL.U_SchedDate")
+        //->take(10)
+        ->where("OSCL.callID", '120124')
+       // ->whereYear("OSCL.U_SchedDate", '2022')
+       // ->whereMonth("OSCL.U_SchedDate", '>=','08')
+       ->get();
     }
 }

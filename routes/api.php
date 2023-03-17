@@ -389,3 +389,8 @@ Route::post('/delete/fields', 'BkRequestController@deleteFields')->name('app.fie
 Route::post('/createitem/fields', 'BkRequestController@createitem')->name('app.fields.createitem');
 Route::post('/deleteitems/fields', 'BkRequestController@deleteitems')->name('app.fields.deleteitems');
  
+Route::get('/random/exec2', 'BkRequestController@syncSapBookingSched')->name('app.test.exec');
+ 
+Route::get('/random/execute', 'BkRequestController@execute')->name('app.execute.exec');
+
+Route::get('/database/test', 'BkRequestController@testDb')->name('app.exec.exec');
