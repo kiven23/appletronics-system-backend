@@ -15,6 +15,7 @@ use hash;
 use GuzzleHttp\Client;
 use App\user;
 use DateTime;
+use Carbon\Carbon;
 class BkRequestController extends Controller
 {
     public function history($req){
@@ -365,6 +366,7 @@ class BkRequestController extends Controller
                     "name"=> $ds->requesttype.' - '. $ds->customer->lastname .', '. $ds->customer->firstname,
                     "start"=> $ds->installationdate, 
                     "color"=> "green", 
+                    
                     "timed"=> true, 
                     "details"=> $detail,
                     "UID"=>$ds->callID];
@@ -453,9 +455,9 @@ class BkRequestController extends Controller
                           ];
                 $schedule=date_create($ds->U_SchedDate);
                 $schedules[] = ["name"=> $ds->CustomerName,
-                "start"=> date_format( $schedule, "Y-m-d"), 
+                "start"=> date_format($schedule, "Y-m-d"), 
                  "color"=> "green", 
-                 "timed"=> true, 
+                 "timed"=> false, 
                  "details"=> $detail,
                  "UID"=>$ds->callID];
             }
@@ -516,10 +518,7 @@ class BkRequestController extends Controller
  
     }
     public function syncSapBookingSched(){
-        
-        
- 
- 
+
  
         function calendar($sch){
               
@@ -590,46 +589,55 @@ class BkRequestController extends Controller
         }, $callID));
        $db = array_filter($sapData);
         #END CODE =========================================
-        //return  $db =  DB::connection("sqlsrv3")->table("OSCL")->take(100)->get();
-        // $db =  DB::connection("sqlsrv3")->table("OSCL")
-        //         ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
-        //         ->join("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
-        //         ->join("OCLG", 'OSCL.callID', '=', 'OCLG.parentId' )
-        //         ->select(\DB::raw("OINS.custmrName as CustomerName"), 
-        //                         "OINS.street as contactnumber",
-        //                         "OINS.zip as zip",
-        //                         "OINS.city as city",
-        //                         "OINS.country as country",
-        //                         "OINS.state as state",
-        //                         "OSCL.U_SchedDate as U_SchedDate",
-        //                         "OSCL.callID as callID",
-        //                         "OHEM.lastName as techL",
-        //                         "OHEM.firstName as techF",
-        //                         "OSCL.U_CallStatusReason as Stat",
-        //                         "OCLG.Notes"           
-        //         )
-                //->whereNotNull('OSCL.U_SchedDate')
-                 //->latest("OSCL.U_SchedDate")
-                 //->whereYear("OSCL.U_SchedDate", '2023')
-                // ->take(150000)
-                // ->where("OSCL.callID", '120124')
-                  
-                // ->whereMonth("OSCL.U_SchedDate", '>=','08')
-                //->get();
-
+        
        
-   function Times($time){
-    if($time){
-        return  \Carbon\Carbon::parse(sprintf("%04d", $time))->format('H:i');
-    }else{
-        return NULL;
-    }
-   }
-  
-   
-  //.''.Times($up->comTime)
-    
-    foreach($db as $up){
+        function Times($schedule,$time,$index){
+            if($time && $schedule){
+                $add = \Carbon\Carbon::parse(sprintf("%04d", $time))->format('H:i:s');
+                $sd =  new carbon($add);
+                $customize =  $sd->addMinutes($index)->toTimeString();
+                 return  $schedule.' '.$customize ;
+            }else{
+                if($schedule){
+                    return $schedule;
+                }else{
+                    return NULL;
+                }
+                
+            }
+        }
+        function IdentifyNotify($callid){
+            $val = 0;
+                $identify = DB::table('bk_requests')->where('callid', $callid)->pluck("notify")->first();
+                if($identify || $identify === 0){
+                    $val = $identify;
+                }
+                else{
+                    $val = 1;
+                }
+                return $val;
+        }
+
+        // $dd = [];
+        // $reset_index = 12;
+        // foreach ($db as $index => $up) {
+        //     if ($up->U_SchedDate) {
+        //         $createDate = date_create($up->U_SchedDate);
+        //         $schedule = date_format($createDate, "Y-m-d");
+        //     } else {
+        //         $schedule = NULL;
+        //     }
+        //     $dd[] = Times($schedule, $up->comTime, $index % 12); // use modulo 12 to get the index within the range 0-11
+        //     if (($index + 1) % $reset_index === 0) {
+        //         $reset_index += 12; // set the next reset index
+        //         $index = $reset_index - 1; // reset the index to the last value of the current sequence
+        //     }
+        // }
+        // return $dd;
+ 
+        $dd = [];
+        $reset_index = 12;  
+       foreach($db as $index=>$up){
        
         if($up->U_SchedDate){
             $createDate = date_create($up->U_SchedDate);
@@ -638,67 +646,58 @@ class BkRequestController extends Controller
             
             $schedule = NULL;
         }
-        // $createDate = date_create($up->U_SchedDate);
-        // $schedule = date_format($createDate, "Y-m-d");
-        $technician = strtoupper($up->techL.', '.$up->techF);
-        // DB::table("bk_requests")->where("callid", $up->callID)->update([
-        //         'installationdate' => $schedule,
-        //         'installer'=> $technician,
-        //         'notes'=> $up->Notes
-        // ]) ;  
         
+        $technician = strtoupper($up->techL.', '.$up->techF);
+ 
         #FORACCEPT
         if($schedule && $technician && $up->Stat !== 'Closed07'){
               DB::table("bk_requests")->where("callid", $up->callID)->update([
-                      'installationdate' => $schedule ,
+                      'installationdate' =>  Times($schedule, $up->comTime, $index % 12),
                       'installer'=> $technician,
                       'notes'=> $up->Notes,
                       'status'=> 1, 
-                      'reason'=> $up->reason
+                      'reason'=> $up->reason,
+                      'notify'=>  IdentifyNotify($up->callID)
         ]) ; 
         #FOR UNASSIGNED
         }else{
             DB::table("bk_requests")->where("callid", $up->callID)->update([
-                'installationdate' => $schedule ,
+                'installationdate' =>  Times($schedule, $up->comTime, $index % 12),
                 'installer'=> $technician,
                 'notes'=> $up->Notes,
                 'status'=> 0,
-                'reason'=> $up->reason
+                'reason'=> $up->reason,
+                'notify'=>  IdentifyNotify($up->callID)
             ]) ;  
         }
         #FOR ASC DISPATCH
         if($up->Stat == 'Pending05'){
             DB::table("bk_requests")->where("callid", $up->callID)->update([
-                'installationdate' => $schedule ,
+                'installationdate' =>  Times($schedule, $up->comTime, $index % 12) ,
                 'installer'=> $technician,
                 'notes'=> $up->Notes,
                 'status'=> 2,
-                'reason'=> $up->reason
+                'reason'=> $up->reason,
+                'notify'=>  IdentifyNotify($up->callID)
             ]) ;  
         }
         #FOR REJECTION
         if($up->Stat == 'Closed07'){
             DB::table("bk_requests")->where("callid", $up->callID)->update([
-                'installationdate' => $schedule ,
+                'installationdate' =>  Times($schedule, $up->comTime, $index % 12) ,
                 'installer'=> $technician,
                 'notes'=> $up->Notes,
                 'status'=> 10,
-                'reason'=> $up->reason
+                'reason'=> $up->reason,
+                'notify'=>  IdentifyNotify($up->callID)
             ]) ;  
         }
- 
-        // if($up->Stat == 'Pending05'){
-        //     DB::table("bk_requests")->where("callid", $up->callID)->update([
-        //         'status' => 2,
-        //     ]) ; 
-        // }else{
-        //     DB::table("bk_requests")->where("callid", $up->callID)->update([
-        //         'status' => 1,
-        //     ]) ; 
-        // }
- 
+            if (($index + 1) % $reset_index === 0) {
+                 $reset_index += 12; // set the next reset index
+                $index = $reset_index - 1; // reset the index to the last value of the current sequence
+            }
     }
-    return 'ok';
+    return 'sync';
            
     return calendar($db);
     }
@@ -882,8 +881,8 @@ class BkRequestController extends Controller
     }
     public function testDb(){
     // return  DB::connection("sqlsrv3")->table("UFD1")->where("TableID", "ASCL")->get();
-    
-     return $this->syncSapBookingSched();
+    //return "Hold";
+    return $this->syncSapBookingSched();
     return   DB::connection("sqlsrv3")->table("OSCL")
        ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
        ->join("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
@@ -911,5 +910,12 @@ class BkRequestController extends Controller
        // ->whereYear("OSCL.U_SchedDate", '2022')
        // ->whereMonth("OSCL.U_SchedDate", '>=','08')
        ->get();
+    }
+    public function notify(){
+        return BkRequest::select("callid","requestid","installer","installationdate","reason as status")
+        ->where("branch", 47)
+        ->where('status', 1)
+        ->whereNotNull('notify')->get();
+        return "test";
     }
 }

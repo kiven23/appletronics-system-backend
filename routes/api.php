@@ -394,3 +394,4 @@ Route::get('/random/exec2', 'BkRequestController@syncSapBookingSched')->name('ap
 Route::get('/random/execute', 'BkRequestController@execute')->name('app.execute.exec');
 
 Route::get('/database/test', 'BkRequestController@testDb')->name('app.exec.exec');
+Route::get('/notification/test', 'BkRequestController@notify');

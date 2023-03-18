@@ -38,6 +38,10 @@ class BkScalateController extends Controller
     if(@$req->q == 2){
       return $this->index(2, $req->id);    
     }
+     $request = BkRequest::select("callid","requestid","installer","installationdate","reason as status")
+    ->where("branch", \Auth::user()->branch_id)
+    ->where('status', 1)
+    ->whereNotNull('notify')->get();
     $receiver = \Auth::user()->branch_id == 5 ? 5: \Auth::user()->branch_id;
     $data = DB::table('bk_notifies')
                              ->select("bk_notifies.created_at",
@@ -52,8 +56,9 @@ class BkScalateController extends Controller
                              ->where('bk_notifies.status', 0)
                              ->orderby('bk_notifies.id', 'DESC')
                              ->get();
-     $d['count'] =  count($data);
-     $d['data']=$data;
+     $d['count'] =  count($data) + count($request);
+     $d['data']= $data;
+     $d['notify'] = $request;
     return $d;
     }
 
