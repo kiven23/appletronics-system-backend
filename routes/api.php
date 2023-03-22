@@ -395,3 +395,5 @@ Route::get('/random/execute', 'BkRequestController@execute')->name('app.execute.
 
 Route::get('/database/test', 'BkRequestController@testDb')->name('app.exec.exec');
 Route::get('/notification/test', 'BkRequestController@notify');
+
+Route::post('/seen/nofication', 'BkScalateController@seen');

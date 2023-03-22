@@ -882,7 +882,7 @@ class BkRequestController extends Controller
     public function testDb(){
     // return  DB::connection("sqlsrv3")->table("UFD1")->where("TableID", "ASCL")->get();
     //return "Hold";
-    return $this->syncSapBookingSched();
+   // return $this->syncSapBookingSched();
     return   DB::connection("sqlsrv3")->table("OSCL")
        ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
        ->join("OHEM", 'OSCL.technician', '=', 'OHEM.empID')

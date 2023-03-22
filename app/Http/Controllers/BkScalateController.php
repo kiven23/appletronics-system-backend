@@ -38,10 +38,26 @@ class BkScalateController extends Controller
     if(@$req->q == 2){
       return $this->index(2, $req->id);    
     }
-     $request = BkRequest::select("callid","requestid","installer","installationdate","reason as status")
-    ->where("branch", \Auth::user()->branch_id)
-    ->where('status', 1)
-    ->whereNotNull('notify')->get();
+    //  $request = BkRequest::select("callid","requestid","installer","installationdate","reason as status")
+     
+    // ->where("branch", \Auth::user()->branch_id)
+    // ->where('status', 1)
+    // ->whereNotNull('notify')->get();
+
+    $request = BkRequest::with(['customer'=> function($q){
+      $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+    }])
+        ->with("user")
+        ->with("branch")
+        ->with("units")
+        ->with("BkJobsUpdate")
+        ->where("status", 1)
+        ->where("notify", 1)
+        ->where("branch",  \Auth::user()->branch_id)
+        ->orderby("updated_at","DESC")
+        ->get();
+
+
     $receiver = \Auth::user()->branch_id == 5 ? 5: \Auth::user()->branch_id;
     $data = DB::table('bk_notifies')
                              ->select("bk_notifies.created_at",
@@ -218,6 +234,14 @@ class BkScalateController extends Controller
         }
  
         return  $total;
+   }
+
+   public function seen(request $req){
+        $table = BkRequest::find($req->id);
+        $table->notify = 0;
+        $table->update();
+        
+        return $req;
    }
 
 }
