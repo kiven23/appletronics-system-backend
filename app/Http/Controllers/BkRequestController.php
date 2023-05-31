@@ -18,6 +18,18 @@ use DateTime;
 use Carbon\Carbon;
 class BkRequestController extends Controller
 {
+    public function regionMap($id){
+    
+        $client = new Client();
+        $response = $client->get('http://192.168.1.19:8012/api2/region.json');
+        foreach(json_decode($response->getBody()) as $data){
+          $d = (int) $data->region_code;
+          if($d == $id){
+            $arr = ['name'=> $data->region_name, 'id'=> $data->region_code] ;
+          }
+        }
+        return $arr;
+    }
     public function history($req){
         if($req->cpnumber){
             $check = BkCustomerHistory::where("cpnumber", $req->cpnumber)->pluck('id')->first();
@@ -28,9 +40,10 @@ class BkRequestController extends Controller
                 $CustomerDATA->middlename  = ucfirst(@$req->middlename);
                 $CustomerDATA->barangay  = @$req->barangay;
                 $CustomerDATA->contactperson = @$req->contactperson;
-                $CustomerDATA->cpnumber = '+63'.@$req->cpnumber;
+                $CustomerDATA->cpnumber = @$req->cpnumber;
                 $CustomerDATA->emailaddress = @$req->emailaddress;
-                 
+                $CustomerDATA->region_id  =  $this->regionMap($req->region)['id'];
+                $CustomerDATA->region_name  = $this->regionMap($req->region)['name'];
                 $CustomerDATA->houseno = @$req->houseno;
                 $CustomerDATA->mcity = @$req->mcity;
                 $CustomerDATA->organization = @$req->organization;
@@ -39,22 +52,51 @@ class BkRequestController extends Controller
                 $CustomerDATA->street = @$req->street;
                 $CustomerDATA->telephoneno = @$req->telephoneno;
                 $CustomerDATA->save();
+            } 
+            if($check){
+                $CustomerDATA = BkCustomerHistory::find($check);
+                $CustomerDATA->firstname =  ucfirst(@$req->firstname);
+                $CustomerDATA->lastname  = ucfirst(@$req->lastname);
+                $CustomerDATA->middlename  = ucfirst(@$req->middlename);
+                $CustomerDATA->barangay  = @$req->barangay;
+                $CustomerDATA->contactperson = @$req->contactperson;
+                $CustomerDATA->cpnumber = @$req->cpnumber;
+                $CustomerDATA->emailaddress = @$req->emailaddress;
+                $CustomerDATA->region_id  =  $this->regionMap($req->region)['id'];
+                $CustomerDATA->region_name  = $this->regionMap($req->region)['name'];
+                $CustomerDATA->houseno = @$req->houseno;
+                $CustomerDATA->mcity = @$req->mcity;
+                $CustomerDATA->organization = @$req->organization;
+                $CustomerDATA->province = @$req->province;
+                $CustomerDATA->specialinstruction = @$req->specialinstruction;
+                $CustomerDATA->street = @$req->street;
+                $CustomerDATA->telephoneno = @$req->telephoneno;
+                $CustomerDATA->update();
             }
         }
        return "OK";
     }
     public function store(request $req){
-        $checkData = BkRequest::where('requestid', $req->requestid)->pluck('requestid')->first();
+         
+         $checkData = BkRequest::where('requestid', $req->requestid)->pluck('requestid')->first();
         //CUSTOMER
         try{
+             
             if(!$checkData){
+                  
                 $CustomerDATA = new BkCustomerInfo();
                 $CustomerDATA->firstname = ucfirst(@$req->firstname);
                 $CustomerDATA->lastname  = ucfirst(@$req->lastname);
                 $CustomerDATA->middlename  = ucfirst(@$req->middlename);
                 $CustomerDATA->barangay  = @$req->barangay;
+                 
+                $CustomerDATA->region_id  =  $this->regionMap($req->region)['id'];
+                 
+                $CustomerDATA->region_name  = $this->regionMap($req->region)['name'];
+               
                 $CustomerDATA->contactperson = @$req->contactperson? @$req->contactperson : 'N/A';
-                $CustomerDATA->cpnumber = '+63'.@$req->cpnumber;
+                $CustomerDATA->cpnumber = @$req->cpnumber;
+                
                 $CustomerDATA->emailaddress = @$req->emailaddress?@$req->emailaddress : 'N/A';
                 $CustomerDATA->houseno = @$req->houseno?@$req->houseno : 'N/A';
                 $CustomerDATA->mcity = @$req->mcity? @$req->mcity : 'N/A';
@@ -69,12 +111,13 @@ class BkRequestController extends Controller
                 $path = Storage::putFile('BookingSystemAttachments',$req->file("attachment"));
                 $name = $req->file("attachment")->getClientOriginalName();
                 }else{
-                $path = '';
-                $name = '';
+                $path = $req->attachment;
+                $name = $req->attachmentN;
                 }
-                  
+                 
                 //REQUEST
                 $RequestDATA = new BkRequest();
+                $RequestDATA->filename = $name;
                 $RequestDATA->requestid = @$req->requestid;
                 $RequestDATA->requesttype = @$req->requestType;
                 $RequestDATA->customerid = @$CustomerDATA->id;
@@ -117,7 +160,7 @@ class BkRequestController extends Controller
                     $units->demandreplacement = @$data->demandreplacement;
                     $units->level = @$data->level;
                     $units->location = @$data->location;
-
+                    $units->propertytype = @$data->propertytype;
                     //INSTALLATION ADDRESS
                     $units->locationofinstallation = $data->locationofinstallation === 0 ?@$req->barangay.','.@$req->mcity.','.@$req->province:  $data->locationofinstallation;
                     $units->model = @$data->model;
@@ -132,7 +175,7 @@ class BkRequestController extends Controller
                     $units->unitcondition = @$data->unitcondition;
                     $units->wallfinish = @$data->wallfinish;
                     $units->warrantycondition = @$data->warrantycondition;
-                    $units->withpowersupply = @$data->withpowersupply->value;
+                    $units->withpowersupply = @$data->withpowersupply;
                      $units->save();
                     
                 }
@@ -300,9 +343,13 @@ class BkRequestController extends Controller
         $update = BkRequest::where("requestid", $req->data['requestID'])->first();
         $update->status = 0;
         $update->callid = $req->data['callid'];
+        if($req->data['callid']){
+            $update->notify = 6;
+        }
        // $update->installer = $req->data['installer'];
         //$update->installationdate = $req->data['installationData'];
-         $update->update();
+
+        $update->update();
        $msg = ["msg"=> 'Job '.$req->data['requestID'].' Success Updated', "error"=> 'success', "type"=>1];
        }catch(\Exception $e){
         $msg = ["msg"=>  $e, "error"=> 'error'];
@@ -336,27 +383,43 @@ class BkRequestController extends Controller
             }
         }
      return ex($req->type);
-         
+        
+    }
+    public function close(request $req){
+        
+        $data = BkRequest::with("customer")->where('id', $req->id)
+        ->update(['status' => 222]);
+        return $data;
     }
 
     public function calendarschedule(){
-
-    //    return $dataD = BkRequest::with("customer")
-    //     ->with("user")
-    //     ->with("units")
-    //     ->with("BkJobsUpdate")
-    //     ->with("branch")
-    //     ->whereNotNull("branch")
-    //     ->whereHas("branch", function($query)  {
-    //         $query->where("id", 47);
-    //     })
-    //     ->get();
-
-       // Get the name of the branch for the current user
-       #47 alexander
+          //CALLIN1
+          if(\Auth::user()->hasRole(['AREA1'])){
+            $region = 8;
+        }
+        //CALLIN2
+        if(\Auth::user()->hasRole(['AREA2'])){
+            $region = 9;
+        }
+        //CALLIN3
+        if(\Auth::user()->hasRole(['AREA3'])){
+            $region = 10;
+        }
+        //CALLIN4
+        if(\Auth::user()->hasRole(['AREA4'])){
+            $region = 11;
+        }
+        if(\Auth::user()->hasRole(['AREASALL'])){
+            $region = 4;
+        }
+         
+        $branches = DB::table("branches")
+                         ->where('region_id', $region)->pluck('id'); 
+                         
+      
+        #47 alexander
         $branchName = \Auth::user()->branch->id;  
         function calendar($sch){
-              
             foreach($sch as $ds){
                   if($ds->installationdate){
                     $detail = ["requestid"=> $ds->requestid,
@@ -366,155 +429,148 @@ class BkRequestController extends Controller
                     "name"=> $ds->requesttype.' - '. $ds->customer->lastname .', '. $ds->customer->firstname,
                     "start"=> $ds->installationdate, 
                     "color"=> "green", 
-                    
                     "timed"=> true, 
                     "details"=> $detail,
                     "UID"=>$ds->callID];
                  }
- 
             }
            return $schedules;
-           
         }
- 
-         $branchName = \Auth::user()->branch->id;
-        if(\Auth::user()->Branch->id == 5){  
-           $data = BkRequest::with("customer")
+        $branchName = \Auth::user()->branch->id;
+         
+        if(\Auth::user()->Branch->id == 5){
+            if($region == 4){
+                $data = BkRequest::with("customer")
+                                ->with("user")
+                                ->with("units")
+                                ->with("branch")
+                                ->with("BkJobsUpdate")
+                                ->where("status", 1)
+                                ->orWhere("status", 2)
+                                ->whereNotNull("installationdate")
+                                ->get();
+                
+            }else{
+                 
+                $data = BkRequest::with("customer")
+                    ->with("user")
+                    ->with("units")
+                    ->with("branch")
+                    ->with("BkJobsUpdate")
+                    ->where(function($query) {
+                        $query->where("status", 1)
+                              ->orWhere("status", 2);
+                    })
+                    ->whereNotNull("installationdate")
+                    ->whereHas("branch", function($query) use ($branches) {
+                        $query->whereIn('id', $branches);
+                    })
+                    ->get();
+            
+            }
+          
+        }else{
+                $data = BkRequest::with("customer")
                 ->with("user")
                 ->with("units")
-                ->with("branch")
                 ->with("BkJobsUpdate")
-                ->where("status", 1)
-                ->orWhere("status", 2)
-                ->whereNotNull("installationdate")
+                ->with("branch")
+                ->whereNotNull("branch")
+                ->whereHas("branch", function($query)use($branchName)  {
+                    $query->where("id", $branchName);
+                })
                 ->get();
-        }else{
-        //     $dataD = BkRequest::with("customer")
-        //     ->with("user")
-        //     ->with("units")
-        //     ->with("BkJobsUpdate")
-        //     ->with(["branch"=> function($d){
-        //         $d->where('id', 47);
                 
-        //     }])
-        //     ->whereNotNull("branch")
-        //     // ->where(function($query) use ($branchName) {
-        //     //     $query->where("status", 1)
-        //     //         ->orWhere("status", 2)
-        //     //         ->whereNotNull("installationdate")
-        //     //         ->whereHas("branch", function($q) use ($branchName) {
-        //     //             $q->where("SAP_BRANCH", $branchName);
-        //     //         });
-        //     // }) 
-        // ->get();
-
-
-        $data = BkRequest::with("customer")
-        ->with("user")
-        ->with("units")
-        ->with("BkJobsUpdate")
-        ->with("branch")
-   
-        ->whereNotNull("branch")
-        ->whereHas("branch", function($query)use($branchName)  {
-            $query->where("id", $branchName);
-        })
- 
-        ->get();
-
-
-
-        
         }
-      
+     
        return $sched1 = calendar($data);
 
 
-        function calendar1($sch){
+    //     function calendar1($sch){
               
-            foreach($sch as $ds){
+    //         foreach($sch as $ds){
                
-                $detail = ["requestid"=> $ds->subject ,
-                           "callid"=> $ds->callID ,
-                           "customer"=> [
-                            "firstname"=> $ds->CustomerName,
-                            "lastname"=> "",
-                            "middlename"=> "",
-                            "barangay"=> "",
-                            "contactperson"=> "",
-                            "cpnumber"=> $ds->contactnumber,
-                            "emailaddress"=> "",
-                            "houseno"=> "",
-                            "mcity"=> $ds->city,
-                            "organization"=> "",
-                            "province"=> $ds->state,
-                            "specialinstruction"=> "",
-                            "street"=> "",
-                            "telephoneno"=> "",
-                             ]
-                          ];
-                $schedule=date_create($ds->U_SchedDate);
-                $schedules[] = ["name"=> $ds->CustomerName,
-                "start"=> date_format($schedule, "Y-m-d"), 
-                 "color"=> "green", 
-                 "timed"=> false, 
-                 "details"=> $detail,
-                 "UID"=>$ds->callID];
-            }
-           return $schedules;
+    //             $detail = ["requestid"=> $ds->subject ,
+    //                        "callid"=> $ds->callID ,
+    //                        "customer"=> [
+    //                         "firstname"=> $ds->CustomerName,
+    //                         "lastname"=> "",
+    //                         "middlename"=> "",
+    //                         "barangay"=> "",
+    //                         "contactperson"=> "",
+    //                         "cpnumber"=> $ds->contactnumber,
+    //                         "emailaddress"=> "",
+    //                         "houseno"=> "",
+    //                         "mcity"=> $ds->city,
+    //                         "organization"=> "",
+    //                         "province"=> $ds->state,
+    //                         "specialinstruction"=> "",
+    //                         "street"=> "",
+    //                         "telephoneno"=> "",
+    //                          ]
+    //                       ];
+    //             $schedule=date_create($ds->U_SchedDate);
+    //             $schedules[] = ["name"=> $ds->CustomerName,
+    //             "start"=> date_format($schedule, "Y-m-d"), 
+    //              "color"=> "green", 
+    //              "timed"=> false, 
+    //              "details"=> $detail,
+    //              "UID"=>$ds->callID];
+    //         }
+    //        return $schedules;
            
-        }
-         #LATES FUNCTION TO FILTER BRANCHES SCHEDULE
-        return $sched1;
+    //     }
+    //      #LATES FUNCTION TO FILTER BRANCHES SCHEDULE
+    //     return $sched1;
 
-        if(\Auth::user()->Branch->id == 5){
-            // Define the SQL query using Laravel's Query Builder
-            $db = DB::connection("sqlsrv3")->table("OSCL")
-                ->selectRaw("OINS.custmrName as CustomerName, 
-                            OINS.street as contactnumber,
-                            OINS.zip as zip,
-                            OINS.city as city,
-                            OINS.country as country,
-                            OINS.state as state,
-                            OSCL.U_SchedDate as U_SchedDate,
-                            OSCL.callID as callID,
-                            OSCL.subject as subject,
-                            OCRG.GroupName as branch")
-                ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
-                ->join("OCRD", "OSCL.customer", "=", "OCRD.cardcode")
-                ->join("OCRG", "OCRD.GroupCode", "=", "OCRG.GroupCode")
-                ->whereNotNull('OSCL.U_SchedDate')
-                //->where("OCRG.GroupName", "LIKE", '%'.$branchName.'%')
-                ->latest("OSCL.U_SchedDate")
-                ->take(500)
-                ->get();
-        }else{
-            // Define the SQL query using Laravel's Query Builder
-            $db = DB::connection("sqlsrv3")->table("OSCL")
-                ->selectRaw("OINS.custmrName as CustomerName, 
-                            OINS.street as contactnumber,
-                            OINS.zip as zip,
-                            OINS.city as city,
-                            OINS.country as country,
-                            OINS.state as state,
-                            OSCL.U_SchedDate as U_SchedDate,
-                            OSCL.callID as callID,
-                            OSCL.subject as subject,
-                            OCRG.GroupName as branch")
-                ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
-                ->join("OCRD", "OSCL.customer", "=", "OCRD.cardcode")
-                ->join("OCRG", "OCRD.GroupCode", "=", "OCRG.GroupCode")
-                ->whereNotNull('OSCL.U_SchedDate')
-                 ->where("OCRG.GroupName", "LIKE", '%'.$branchName.'%')
-                ->latest("OSCL.U_SchedDate")
-                ->take(500)
-                ->get();
-        }
+    //     if(\Auth::user()->Branch->id == 5){
+    //         // Define the SQL query using Laravel's Query Builder
+    //         $db = DB::connection("sqlsrv3")->table("OSCL")
+    //             ->selectRaw("OINS.custmrName as CustomerName, 
+    //                         OINS.street as contactnumber,
+    //                         OINS.zip as zip,
+    //                         OINS.city as city,
+    //                         OINS.country as country,
+    //                         OINS.state as state,
+    //                         OSCL.U_SchedDate as U_SchedDate,
+    //                         OSCL.callID as callID,
+    //                         OSCL.subject as subject,
+    //                         OCRG.GroupName as branch")
+    //             ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
+    //             ->join("OCRD", "OSCL.customer", "=", "OCRD.cardcode")
+    //             ->join("OCRG", "OCRD.GroupCode", "=", "OCRG.GroupCode")
+    //             ->whereNotNull('OSCL.U_SchedDate')
+    //             //->where("OCRG.GroupName", "LIKE", '%'.$branchName.'%')
+    //             ->latest("OSCL.U_SchedDate")
+    //             ->take(500)
+    //             ->get();
+    //     }else{
+    //         // Define the SQL query using Laravel's Query Builder
+    //         $db = DB::connection("sqlsrv3")->table("OSCL")
+    //             ->selectRaw("OINS.custmrName as CustomerName, 
+    //                         OINS.street as contactnumber,
+    //                         OINS.zip as zip,
+    //                         OINS.city as city,
+    //                         OINS.country as country,
+    //                         OINS.state as state,
+    //                         OSCL.U_SchedDate as U_SchedDate,
+    //                         OSCL.callID as callID,
+    //                         OSCL.subject as subject,
+    //                         OCRG.GroupName as branch")
+    //             ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
+    //             ->join("OCRD", "OSCL.customer", "=", "OCRD.cardcode")
+    //             ->join("OCRG", "OCRD.GroupCode", "=", "OCRG.GroupCode")
+    //             ->whereNotNull('OSCL.U_SchedDate')
+    //              ->where("OCRG.GroupName", "LIKE", '%'.$branchName.'%')
+    //             ->latest("OSCL.U_SchedDate")
+    //             ->take(500)
+    //             ->get();
+    //     }
 
     
     
-    $sched2 = calendar1($db);
-    return  array_merge($sched1, $sched2);
+    // $sched2 = calendar1($db);
+    // return  array_merge($sched1, $sched2);
  
     }
     public function syncSapBookingSched(){
@@ -554,7 +610,7 @@ class BkRequestController extends Controller
            
         }
         function sapDataConnect($callid){
-            $dd = DB::connection("sqlsrv3")->table("OSCL")
+              $dd = DB::connection("sqlsrv3")->table("OSCL")
                 ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
                 ->leftjoin("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
                 ->join("OCLG", 'OSCL.callID', '=', 'OCLG.parentId' )
@@ -572,16 +628,18 @@ class BkRequestController extends Controller
                                 "OHEM.firstName as techF",
                                 "OSCL.U_CallStatusReason as Stat",
                                 "UFD1.Descr as reason",
-                                "OCLG.Notes"           
+                                "OCLG.Notes",
+                                "OCLG.ClgCode"           
                 )
                 //->latest("OSCL.U_SchedDate")
                 ->where("OSCL.callID", $callid)
-                ->first();
+                ->orderBy("OCLG.ClgCode", "asc")
+                ->get()
+                ->last();
             if($dd){
                 return $dd; 
             } 
         }
-       
         # NEW CODE =========================================
        $callID  =  DB::table("bk_requests")->whereNotNull("callid")->select("callid")->get()->toArray();
         $sapData = array_filter(array_map(function($sData) {
@@ -589,14 +647,12 @@ class BkRequestController extends Controller
         }, $callID));
        $db = array_filter($sapData);
         #END CODE =========================================
-        
-       
-        function Times($schedule,$time,$index){
+        function Times($schedule,$time){
             if($time && $schedule){
                 $add = \Carbon\Carbon::parse(sprintf("%04d", $time))->format('H:i:s');
-                $sd =  new carbon($add);
-                $customize =  $sd->addMinutes($index)->toTimeString();
-                 return  $schedule.' '.$customize ;
+                // $sd =  new carbon($add);
+                // $customize =  $sd->addMinutes($index)->toTimeString();
+                 return  $schedule.' '.$add ;
             }else{
                 if($schedule){
                     return $schedule;
@@ -610,15 +666,19 @@ class BkRequestController extends Controller
             $val = 0;
                 $identify = DB::table('bk_requests')->where('callid', $callid)->pluck("notify")->first();
                 if($identify || $identify === 0){
-                    $val = $identify;
+                    if($identify === 7){
+                        $val = 1;
+                    }else{
+                        $val = $identify;
+                    }
                 }
                 else{
                     $val = 1;
                 }
                 return $val;
         }
-
-        // $dd = [];
+         
+        // $sdd = [];
         // $reset_index = 12;
         // foreach ($db as $index => $up) {
         //     if ($up->U_SchedDate) {
@@ -635,8 +695,8 @@ class BkRequestController extends Controller
         // }
         // return $dd;
  
-        $dd = [];
-        $reset_index = 12;  
+        // $dd = [];
+        // $reset_index = 12;  
        foreach($db as $index=>$up){
        
         if($up->U_SchedDate){
@@ -652,7 +712,7 @@ class BkRequestController extends Controller
         #FORACCEPT
         if($schedule && $technician && $up->Stat !== 'Closed07'){
               DB::table("bk_requests")->where("callid", $up->callID)->update([
-                      'installationdate' =>  Times($schedule, $up->comTime, $index % 12),
+                      'installationdate' =>  Times($schedule, $up->comTime),
                       'installer'=> $technician,
                       'notes'=> $up->Notes,
                       'status'=> 1, 
@@ -662,7 +722,7 @@ class BkRequestController extends Controller
         #FOR UNASSIGNED
         }else{
             DB::table("bk_requests")->where("callid", $up->callID)->update([
-                'installationdate' =>  Times($schedule, $up->comTime, $index % 12),
+                'installationdate' =>  Times($schedule, $up->comTime),
                 'installer'=> $technician,
                 'notes'=> $up->Notes,
                 'status'=> 0,
@@ -673,7 +733,7 @@ class BkRequestController extends Controller
         #FOR ASC DISPATCH
         if($up->Stat == 'Pending05'){
             DB::table("bk_requests")->where("callid", $up->callID)->update([
-                'installationdate' =>  Times($schedule, $up->comTime, $index % 12) ,
+                'installationdate' =>  Times($schedule, $up->comTime) ,
                 'installer'=> $technician,
                 'notes'=> $up->Notes,
                 'status'=> 2,
@@ -684,7 +744,7 @@ class BkRequestController extends Controller
         #FOR REJECTION
         if($up->Stat == 'Closed07'){
             DB::table("bk_requests")->where("callid", $up->callID)->update([
-                'installationdate' =>  Times($schedule, $up->comTime, $index % 12) ,
+                'installationdate' =>  Times($schedule, $up->comTime) ,
                 'installer'=> $technician,
                 'notes'=> $up->Notes,
                 'status'=> 10,
@@ -692,10 +752,10 @@ class BkRequestController extends Controller
                 'notify'=>  IdentifyNotify($up->callID)
             ]) ;  
         }
-            if (($index + 1) % $reset_index === 0) {
-                 $reset_index += 12; // set the next reset index
-                $index = $reset_index - 1; // reset the index to the last value of the current sequence
-            }
+            // if (($index + 1) % $reset_index === 0) {
+            //      $reset_index += 12; // set the next reset index
+            //     $index = $reset_index - 1; // reset the index to the last value of the current sequence
+            // }
     }
     return 'sync';
            
@@ -711,7 +771,6 @@ class BkRequestController extends Controller
         return "ok";
     }
     public function exec(){
-
         $items = DB::table("bk_items")->get();
         $type = DB::table("bk_types")->get(); 
         $brand = DB::table("bk_brand")->get();
@@ -807,10 +866,6 @@ class BkRequestController extends Controller
                 "created_at"=> date("Y-m-d h:i:s")
             ]);
         }
-
-         
-
-
         return "OK";
     }
      
@@ -861,28 +916,59 @@ class BkRequestController extends Controller
         return "ok";
     }
     public function execute(){
-        $full_link = 'http://192.168.1.19:8012/api2/all.json';
-        $unparsed_json = file_get_contents($full_link);
-        $json_object = json_decode($unparsed_json);
-    
+       return 'HOLD';
+        function remove($sql){
+          $sd = floatval(preg_replace('/[^0-9\.]/', '', $sql)); 
+            if($sd == 1){
+                return 13;
+            }
+            if($sd == 1.5){
+                return 20;
+            }
+            if($sd == 2){
+                return 27;
+            }
+            if($sd == 2.5){
+                return 33;
+            }
+            if($sd == 3){
+                return 53;
+            }
+            if($sd == 4){
+                return 66;
+            }
+            if($sd == 5){
+                return 78;
+            } 
+        }
+      $json_object = DB::connection("sqlsrv3")->table("OITM")
+             ->join("OMRC", "OITM.FirmCode", "=","OMRC.FirmCode")
+             ->select(\DB::raw("OMRC.FirmName as Brand"), "OITM.ItemName as model", "OITM.FrgnName as categories", "OITM.U_U_Subcat1 as type", "OITM.U_U_Subcat2 as SQM")
+             ->orderBy("Brand")
+             ->get();
+        // $full_link = 'http://192.168.1.19:8009/api2/items.json';
+        // $unparsed_json = file_get_contents($full_link);
+        // $json_object = json_decode($unparsed_json);
         foreach($json_object  as $res){
           DB::Table("bk_items")->insert([
-           
             "Brand"=>@$res->Brand,
             "categories"=>@$res->categories,
             "type"=>@$res->type,
             "model"=>@$res->model,
-            "SQM"=>@$res->SQM
+            "SQM"=>remove(@$res->SQM)
           ]);
-              
         }
-        return 'ok';
+        return 'OK';
         return  $db =  DB::connection("sqlsrv3")->table("OSCL")->where('U_CallStatusReason', "Pending05")->get();
     }
     public function testDb(){
+
+ 
+
     // return  DB::connection("sqlsrv3")->table("UFD1")->where("TableID", "ASCL")->get();
-    //return "Hold";
-   // return $this->syncSapBookingSched();
+   //  return "Hold";
+    
+    return $this->syncSapBookingSched();
     return   DB::connection("sqlsrv3")->table("OSCL")
        ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
        ->join("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
@@ -912,10 +998,62 @@ class BkRequestController extends Controller
        ->get();
     }
     public function notify(){
-        return BkRequest::select("callid","requestid","installer","installationdate","reason as status")
-        ->where("branch", 47)
-        ->where('status', 1)
-        ->whereNotNull('notify')->get();
-        return "test";
+       
+        if(\Auth::user()->Branch->id !== 5){  
+            return BkRequest::select("callid","requestid","installer","installationdate","reason as status")
+            ->where("branch", \Auth::user()->Branch->id)
+            ->whereIn('status', [1,2,10])
+            ->whereNotNull('notify')->get();
+
+        }else{
+            return BkRequest::select("callid","requestid","installer","installationdate","reason as status")
+            ->where("branch", \Auth::user()->Branch->id)
+            ->where('status', 0)
+            ->whereNotNull('notify')->get();
+        }
+       
+       
     }
+    public function dbug(){
+        // 395116
+        // 396671
+        // $dd = DB::connection("sqlsrv3")->table("OCLG")->where('parentId', '146411')->get()->last();
+        // return  response()->json($dd);
+        $dd = DB::connection("sqlsrv3")->table("OSCL")
+                ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
+                ->leftjoin("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
+                ->join("OCLG", 'OSCL.callID', '=', 'OCLG.parentId' )
+                ->join("UFD1", 'OSCL.U_CallStatusReason', '=', 'UFD1.FldValue')
+                ->select(\DB::raw("OINS.custmrName as CustomerName"), 
+                                "OINS.street as contactnumber",
+                                "OINS.zip as zip",
+                                "OINS.city as city",
+                                "OINS.country as country",
+                                "OINS.state as state",
+                                "OSCL.U_SchedDate as U_SchedDate",
+                                "OSCL.U_comTime as comTime",
+                                "OSCL.callID as callID",
+                                "OHEM.lastName as techL",
+                                "OHEM.firstName as techF",
+                                "OSCL.U_CallStatusReason as Stat",
+                                "UFD1.Descr as reason",
+                                "OCLG.Notes",
+                                "OCLG.ClgCode"         
+                )
+                //->latest("OSCL.U_SchedDate")
+                ->where("OSCL.callID", '146411')
+                ->orderBy("OCLG.ClgCode", "asc")
+                ->get()
+                ->last();
+                // foreach($dd as $data){
+                //     $note[] = $data->Notes;
+                // }
+                // $lastNote = end($note);         
+                // return response()->json($lastNote);
+        return response()->json($dd);
+    }
+   
+
+
+    
 }

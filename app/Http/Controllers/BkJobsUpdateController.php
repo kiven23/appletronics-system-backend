@@ -38,4 +38,10 @@ class BkJobsUpdateController extends Controller
         $msg = ["msg"=>  $e, "error"=> 'error'];
        }
    }
+   public function updateserial(request $req){
+    DB::table("bk_units")->where("id", $req->id)->update([
+      "serialno" =>  $req->value
+    ]);
+    return "success";
+    }
 }

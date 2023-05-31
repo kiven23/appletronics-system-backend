@@ -349,6 +349,7 @@ Route::get('/queries/customers/account', 'SapApiController@queries');
 Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], function () {
 	//BRANCH ACCESS
 	Route::post('/restore', 'BkRequestController@restore')->name('app.booking.system.restore');
+	Route::post('/restore/close', 'BkRequestController@close')->name('app.booking.system.restore.close');
 	Route::post('/store', 'BkRequestController@store')->name('app.booking.system.store');
 	
 	Route::post('/jobs/checkrecords', 'BkRequestController@checkrecords')->name('app.booking.system.jobs/checkrecords');
@@ -373,7 +374,7 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
 	//JOBSUPDATE
 	Route::post('/jobs/jobsupdate', 'BkJobsUpdateController@jobsupdate')->name('app.booking.system.jobs.update');
 	//Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->name('app.booking.system.jobs.calendarschedule');
-   
+    Route::post('/jobs/updateserial', 'BkJobsUpdateController@updateserial')->name('app.booking.system.jobs.update');
 
 });
 Route::get('/notification', 'BkScalateController@notification')->name('app.booking.system.jobs.scalate.notify');
@@ -393,7 +394,11 @@ Route::get('/random/exec2', 'BkRequestController@syncSapBookingSched')->name('ap
  
 Route::get('/random/execute', 'BkRequestController@execute')->name('app.execute.exec');
 
-Route::get('/database/test', 'BkRequestController@testDb')->name('app.exec.exec');
+Route::get('/database/sync', 'BkRequestController@testDb')->name('app.exec.exec');
 Route::get('/notification/test', 'BkRequestController@notify');
 
 Route::post('/seen/nofication', 'BkScalateController@seen');
+Route::get('/testing/api', 'BkRequestController@regionMap');
+
+
+Route::get('/testing/sapapi', 'BkRequestController@dbug');

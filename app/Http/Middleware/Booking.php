@@ -31,7 +31,7 @@ class Booking
        }
 
         //ACCESS JOB UPDATES CAN SENT 
-        if ($request->is('api/booking/jobs/jobsupdate')) {
+        if ($request->is('api/booking/jobs/jobsupdate') || $request->is('api/booking/jobs/updateserial')) {
                 if (\Auth::user()->hasPermissionTo('Jobs Updates')) {
                     return $next($request);
                 } else {
@@ -59,7 +59,18 @@ class Booking
                 abort('403');
                 }
         
-        }  
+        }
+
+        //RESTORE
+        if ($request->is('api/booking/restore/close')) {
+                if (\Auth::user()->hasPermissionTo('Booking Restore')) {
+                    return $next($request);
+                } else {
+                abort('403');
+                }
+        
+        } 
+        
 
         //UPDATE
         if ($request->is('api/booking/update')) {

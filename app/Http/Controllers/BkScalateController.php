@@ -35,6 +35,7 @@ class BkScalateController extends Controller
      
    }
    public function notification(request $req){
+     
     if(@$req->q == 2){
       return $this->index(2, $req->id);    
     }
@@ -44,18 +45,64 @@ class BkScalateController extends Controller
     // ->where('status', 1)
     // ->whereNotNull('notify')->get();
 
-    $request = BkRequest::with(['customer'=> function($q){
-      $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
-    }])
-        ->with("user")
-        ->with("branch")
-        ->with("units")
-        ->with("BkJobsUpdate")
-        ->where("status", 1)
-        ->where("notify", 1)
-        ->where("branch",  \Auth::user()->branch_id)
-        ->orderby("updated_at","DESC")
-        ->get();
+   
+     
+        if(\Auth::user()->Branch->id !== 5){  
+         
+  
+          $request = BkRequest::with(['customer'=> function($q){
+            $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+          }])
+              ->with("user")
+              ->with("branch")
+              ->with("units")
+              ->with("BkJobsUpdate")
+              ->whereIn('status', [1,2,10,0])
+              ->whereIn("notify", [1,6])
+              ->where("branch",  \Auth::user()->branch_id)
+              ->orderby("updated_at","DESC")
+              ->get();
+
+        }else{
+ 
+            if(\Auth::user()->hasRole(['AREA1'])){
+                $region = 8;
+            }
+            if(\Auth::user()->hasRole(['AREA2'])){
+                $region = 9;
+            }
+            if(\Auth::user()->hasRole(['AREA3'])){
+                $region = 10;
+            }
+            if(\Auth::user()->hasRole(['AREA4'])){
+                $region = 11;
+            }
+            if(\Auth::user()->hasRole(['AREASALL'])){
+                $region = 4;
+            }
+        
+               $branches = DB::table("branches")
+                            ->where('region_id', $region)->pluck('id'); 
+
+               $request = BkRequest::with(['customer'=> function($q){
+                $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+              }])
+                    ->with("user")
+                    ->with("branch")
+                    ->with("units")
+                    ->with("BkJobsUpdate")
+                    ->where(function ($query) use($branches, $region) {
+                        if($region !== 4){
+                            for ($i = 0; $i < count($branches); $i++){
+                                $query->orwhere('branch',   $branches[$i]);
+                            }}
+                    }
+                    )
+                    ->where('status', 0)
+                    ->whereNull("notify")
+                    ->orderby("updated_at","DESC")
+                   ->get();
+       }
 
 
     $receiver = \Auth::user()->branch_id == 5 ? 5: \Auth::user()->branch_id;
@@ -237,10 +284,10 @@ class BkScalateController extends Controller
    }
 
    public function seen(request $req){
+        $notify =  BkRequest::where('id', $req->id)->pluck('notify')->first();
         $table = BkRequest::find($req->id);
-        $table->notify = 0;
+        $table->notify = $notify == 6? 7: 0;
         $table->update();
-        
         return $req;
    }
 
