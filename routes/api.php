@@ -383,7 +383,7 @@ Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->
 Route::get('/jobs/customers/list', 'BkScalateController@customerList')->name('app.booking.system.jobs.customerList');
 Route::get('/random/exec', 'BkRequestController@exec')->name('app.scalatecount.exec');
 
-
+Route::get('/fetch/fields/units', 'BkRequestController@unitfields')->name('app.fields.unitfields');
 Route::get('/fetch/fields', 'BkRequestController@fields')->name('app.fields.exec');
 Route::post('/create/fields', 'BkRequestController@createFields')->name('app.fields.create');
 Route::post('/delete/fields', 'BkRequestController@deleteFields')->name('app.fields.delete');

@@ -39,9 +39,12 @@ class BkJobsUpdateController extends Controller
        }
    }
    public function updateserial(request $req){
-    DB::table("bk_units")->where("id", $req->id)->update([
-      "serialno" =>  $req->value
-    ]);
-    return "success";
+     
+        DB::table("bk_units")->where("id", $req->id)->update([
+          "serialno" =>  $req->value,
+          "serialstatus" =>  $req->direct === 0? '':  1,
+        ]);
+        return "success";
+        }
     }
-}
+    

@@ -16,8 +16,28 @@ use GuzzleHttp\Client;
 use App\user;
 use DateTime;
 use Carbon\Carbon;
+
+use Illuminate\Support\Facades\Config;
 class BkRequestController extends Controller
 {
+    public function dbcontroller($cname,$database){
+        
+        $connection = $cname;
+        $config = [
+            'driver' => 'sqlsrv',
+            'host' => env('DATABASEHOST'),
+            'port' => env('DATAPOSTPORT'),
+            'database' => $database,
+            'username' => env('DATABASEUSERNAME'),
+            'password' => env('DATABASEPASSWORD'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+        ];
+        Config::set("database.connections.$connection", $config);
+        return $connection;
+    }
+
     public function regionMap($id){
     
         $client = new Client();
@@ -30,6 +50,7 @@ class BkRequestController extends Controller
         }
         return $arr;
     }
+    
     public function history($req){
         if($req->cpnumber){
             $check = BkCustomerHistory::where("cpnumber", $req->cpnumber)->pluck('id')->first();
@@ -77,7 +98,10 @@ class BkRequestController extends Controller
        return "OK";
     }
     public function store(request $req){
-         
+        
+
+
+        
          $checkData = BkRequest::where('requestid', $req->requestid)->pluck('requestid')->first();
         //CUSTOMER
         try{
@@ -129,7 +153,7 @@ class BkRequestController extends Controller
                 $RequestDATA->userid = @\Auth::user()->id;
                 $RequestDATA->unitid = @md5($req->requestid); 
                 $RequestDATA->attachment = @$path;
-
+                
                 //LOCATION UNIT  
                 $RequestDATA->locandorg = @$req->locanorg? @$req->locanorg :'N/A';
                 // AND NAME OF ORGANIZATION
@@ -140,12 +164,20 @@ class BkRequestController extends Controller
                 $RequestDATA->additionalrequest1 = @$req->additionalrequest1;
                 $RequestDATA->additionalrequest2 = @$req->additionalrequest2;
                 $RequestDATA->specialinstruction = @$req->specialinstruction;
+                $RequestDATA->ifseries = 1;
                 $RequestDATA->save();
                 
 
                 $branchid = \Auth::user()->branch_id;
-                $branch = DB::table("branches")->where("id", $branchid)->pluck("seriesname")->first();
-                $ticketno = substr($branch,0,4).'-'.sprintf("%06s", $RequestDATA->id);
+                $branch = DB::table("branches")->where("id", $branchid)->pluck("sapcode")->first();
+                //GET STARTING SERIES AT BRANCH
+                $getstarting = DB::table("branches")->where("id", $branchid)->pluck("seriesno")->first();
+                $ticketno = substr($branch,0,4).'-'.sprintf("%06s",$getstarting+1);
+        
+                //UPDATE SERIES AT BRANCH TO USED NEXT SERIES IF INPUT ANOTHER ONE
+                DB::table("branches")->where("id", $branchid)->update([
+                    "seriesno" => sprintf("%06s",$getstarting+1)
+                ]);
                 DB::table("bk_requests")->where("id", $RequestDATA->id)->update([
                     "ticketno" => $ticketno
                 ]);
@@ -176,10 +208,14 @@ class BkRequestController extends Controller
                     $units->wallfinish = @$data->wallfinish;
                     $units->warrantycondition = @$data->warrantycondition;
                     $units->withpowersupply = @$data->withpowersupply;
-                     $units->save();
+                    $units->save();
                     
                 }
                 $this->history($req);
+                if($req->restoreid){
+                    $this->close($req->restoreid);
+                }
+                 
                 return response()->json(['ref'=>$ticketno, 'iden'=>  @$req->identify == 1? 0:5, 'msg' => 'Success']);
             } 
                 return response()->json(['ref'=> '', 'iden'=> 1,'msg' => 'File Exist']);
@@ -385,9 +421,8 @@ class BkRequestController extends Controller
      return ex($req->type);
         
     }
-    public function close(request $req){
-        
-        $data = BkRequest::with("customer")->where('id', $req->id)
+    public function close($id){
+        $data = BkRequest::with("customer")->where('id', $id)
         ->update(['status' => 222]);
         return $data;
     }
@@ -770,20 +805,32 @@ class BkRequestController extends Controller
         $trash2->delete();
         return "ok";
     }
-    public function exec(){
+    public function exec(request $req){
+        function getfields($categories){
+            if($categories){
+                $type = DB::table("bk_types")->where("ldr", $categories)->get(); 
+                return $type;
+            }else{
+                return "";
+            }
+         }
+         if($req->cat){
+            return getfields($req->cat);
+         }
+        
         $items = DB::table("bk_items")->get();
         $type = DB::table("bk_types")->get(); 
         $brand = DB::table("bk_brand")->get();
         $cat = DB::table("bk_categories")->get();
-
+        
         $arrCust = ['nomodel'=> 1,
-                    'model'=> 'NO MODEL',
+                    'model'=> '*NO MODEL',
                     'cat' => $cat,
                     'Brand2'=> $brand,
-                    "categories"=> "",
-                    'type'=> $type];
+                    "categories"=> "A",
+                    'type'=> "A"];
         $items[] =  $arrCust;
-
+        
 
         return $items;
         $full_link = 'http://192.168.1.19:8081/api2/all.json';
@@ -806,14 +853,21 @@ class BkRequestController extends Controller
         return 'ok';
     }
     public function fields(request $req){
+        
         if($req->list == 1){
             if($req->id == 4){
             return DB::table("bk_items")->get();
-         
-            }else{
+            }else if($req->id == 5){
+             return DB::table("bk_property_type")->get();
+            }else if($req->id == 6){
+                return DB::table("bk_level")->get();
+            }else if($req->id == 7){
+                return DB::table("bk_location")->get();
+            }
+            else{
                 $type = DB::table("bk_types")->where('identity', $req->id) ->latest()->get(); 
                 $brand = DB::table("bk_brand")->where('identity', $req->id) ->latest()->get();
-                $cat = DB::table("bk_categories")->where('identity', $req->id) ->latest()->get();
+                 $cat = DB::table("bk_categories")->where('identity', $req->id) ->latest()->get();
                 
                 $type_array = $type->toArray();
                 $brand_array = $brand->toArray();
@@ -838,6 +892,7 @@ class BkRequestController extends Controller
     }
      
     public function createFields(request $req){
+       
         #FOR TYPE
         if($req->type == 1){
            $table = "bk_types";
@@ -850,11 +905,22 @@ class BkRequestController extends Controller
         if($req->type == 3){
             $table = "bk_categories";
         }
+        if($req->type == 5){
+            $table = "bk_property_type";
+        }
+        if($req->type == 6){
+            $table = "bk_level";
+        }
+        if($req->type == 7){
+            $table = "bk_location";
+        }
         if($req->identify == 0){
+         
             DB::table($table)->insert([
                 "name"=> $req->fields,
                 "value"=> $req->fields,
                 "identity"=> $req->type,
+                "ldr"=>$req->option,
                 "created_at"=> date("Y-m-d h:i:s")
             ]);
         }
@@ -863,6 +929,7 @@ class BkRequestController extends Controller
                 "name"=> $req->fields,
                 "value"=> $req->fields,
                 "identity"=> $req->type,
+                "ldr"=>$req->option,
                 "created_at"=> date("Y-m-d h:i:s")
             ]);
         }
@@ -886,6 +953,15 @@ class BkRequestController extends Controller
          if($req->type == 3){
              $table = "bk_categories";
          }
+         if($req->type == 5){
+            $table = "bk_property_type";
+        }
+        if($req->type == 6){
+            $table = "bk_level";
+        }
+        if($req->type == 7){
+            $table = "bk_location";
+        }
          DB::table($table)->where("id", $req->id)->delete();
         return "ok";
     }
@@ -916,7 +992,21 @@ class BkRequestController extends Controller
         return "ok";
     }
     public function execute(){
-       return 'HOLD';
+      
+        // $database = [
+        //       "ReportsOptn",
+        //       "SteadfordReports",
+        //       "OutexcelReports",
+        //       "AppliantechReports",
+        //       "ElectroloopReports",
+        //       "ThreathonsReports",
+        //       "PanApplianceReports",
+        //       "EasyToOwnReports"
+        // ];
+       // SERVICEPROD
+       $database = [
+         "SERVICEPROD"
+       ];
         function remove($sql){
           $sd = floatval(preg_replace('/[^0-9\.]/', '', $sql)); 
             if($sd == 1){
@@ -941,24 +1031,35 @@ class BkRequestController extends Controller
                 return 78;
             } 
         }
-      $json_object = DB::connection("sqlsrv3")->table("OITM")
-             ->join("OMRC", "OITM.FirmCode", "=","OMRC.FirmCode")
-             ->select(\DB::raw("OMRC.FirmName as Brand"), "OITM.ItemName as model", "OITM.FrgnName as categories", "OITM.U_U_Subcat1 as type", "OITM.U_U_Subcat2 as SQM")
-             ->orderBy("Brand")
-             ->get();
-        // $full_link = 'http://192.168.1.19:8009/api2/items.json';
-        // $unparsed_json = file_get_contents($full_link);
-        // $json_object = json_decode($unparsed_json);
-        foreach($json_object  as $res){
-          DB::Table("bk_items")->insert([
-            "Brand"=>@$res->Brand,
-            "categories"=>@$res->categories,
-            "type"=>@$res->type,
-            "model"=>@$res->model,
-            "SQM"=>remove(@$res->SQM)
-          ]);
+        $results = [];
+        foreach ($database as $index => $dbname) {
+            $query =  DB::connection($this->dbcontroller('con'.$index.'', $dbname))->table("OITM")
+            ->join("OMRC", "OITM.FirmCode", "=","OMRC.FirmCode")
+            ->select(\DB::raw("OMRC.FirmName as Brand"), "OITM.ItemName as model", "OITM.FrgnName as categories", "OITM.U_U_Subcat1 as type", "OITM.U_U_Subcat2 as SQM")
+            ->orderBy("Brand")
+            ->get();
+            $results = array_merge($results, $query->toArray());
         }
-        return 'OK';
+ 
+        foreach($results  as $res){
+         $check = DB::table("bk_items")->where('model', $res->model)->first();
+         if(!$check){
+              if($res->model !== 'NO MODEL'){
+                $md [] = 'insert kasi wala pa itong item na ito '.$res->model;
+                DB::Table("bk_items")->insert([
+                    "Brand"=>@$res->Brand,
+                    "categories"=>@$res->categories,
+                    "type"=>@$res->type,
+                    "model"=>@$res->model,
+                    "SQM"=>remove(@$res->SQM)
+                  ]);
+              }
+             
+         }
+           
+        }
+
+        return $md;
         return  $db =  DB::connection("sqlsrv3")->table("OSCL")->where('U_CallStatusReason', "Pending05")->get();
     }
     public function testDb(){
@@ -1014,7 +1115,28 @@ class BkRequestController extends Controller
        
        
     }
+    
     public function dbug(){
+
+       
+         //=============================>
+        
+        $branchid = \Auth::user()->branch_id;
+        $branch = DB::table("branches")->where("id", $branchid)->pluck("seriesname")->first();
+        //GET STARTING SERIES AT BRANCH
+        $getstarting = DB::table("branches")->where("id", $branchid)->pluck("seriesno")->first();
+        $ticketno = substr($branch,0,4).'-'.sprintf("%06s",$getstarting+1);
+
+        //UPDATE SERIES AT BRANCH TO USED NEXT SERIES IF INPUT ANOTHER ONE
+        DB::table("branches")->where("id", $branchid)->update([
+            "seriesno" => sprintf("%06s",$getstarting+1)
+        ]);
+
+        return $check = DB::table("bk_requests")->where('ifseries', 1)->where("ticketno", "LIKE", '%'.$branch.'%')->select("ticketno")->get();
+         
+
+        return  $ticketno;
+        //=============================>>
         // 395116
         // 396671
         // $dd = DB::connection("sqlsrv3")->table("OCLG")->where('parentId', '146411')->get()->last();
@@ -1051,6 +1173,16 @@ class BkRequestController extends Controller
                 // $lastNote = end($note);         
                 // return response()->json($lastNote);
         return response()->json($dd);
+    }
+    public function unitfields(){
+       $property_type = DB::table("bk_property_type")->get();
+       $level = DB::table("bk_level")->get();
+       $location = DB::table("bk_location")->get();
+       $data = ["propertytype"=>$property_type,
+               "level"=>$level,
+               "location"=>$location];
+       return $data;
+
     }
    
 
