@@ -402,3 +402,6 @@ Route::get('/testing/api', 'BkRequestController@regionMap');
 
 
 Route::get('/testing/sapapi', 'BkRequestController@dbug');
+
+//PRINT REQUEST FORM
+Route::get('/appletronics/reports/requestform', 'BkRequestController@print');

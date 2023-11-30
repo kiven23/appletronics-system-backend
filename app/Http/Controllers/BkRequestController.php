@@ -16,7 +16,7 @@ use GuzzleHttp\Client;
 use App\user;
 use DateTime;
 use Carbon\Carbon;
-
+use PDF;
 use Illuminate\Support\Facades\Config;
 class BkRequestController extends Controller
 {
@@ -274,7 +274,7 @@ class BkRequestController extends Controller
                         }
                         )
                         ->where("status",  $status)
-                        ->orderby("updated_at","DESC")
+                        ->orderby("created_at","DESC")
                     ->get();
             }else{
                 $data = BkRequest::with(['customer'=> function($q){
@@ -286,7 +286,7 @@ class BkRequestController extends Controller
                 ->with("BkJobsUpdate")
                 ->where("status", $status)
                 ->where("branch", \Auth::user()->Branch->id)
-                ->orderby("updated_at","DESC")
+                ->orderby("created_at","DESC")
                 ->get();
             }
             return $data;
@@ -992,21 +992,22 @@ class BkRequestController extends Controller
         return "ok";
     }
     public function execute(){
-      
-        // $database = [
-        //       "ReportsOptn",
-        //       "SteadfordReports",
-        //       "OutexcelReports",
-        //       "AppliantechReports",
-        //       "ElectroloopReports",
-        //       "ThreathonsReports",
-        //       "PanApplianceReports",
-        //       "EasyToOwnReports"
-        // ];
+       
+       // NEWPROD
+        $database = [
+              "ReportsOptn",
+              "SteadfordReports",
+              "OutexcelReports",
+              "AppliantechReports",
+              "ElectroloopReports",
+              "ThreathonsReports",
+              "PanApplianceReports",
+              "EasyToOwnReports"
+        ];
        // SERVICEPROD
-       $database = [
-         "SERVICEPROD"
-       ];
+    //    $database = [
+    //      "SERVICEPROD"
+    //    ];
         function remove($sql){
           $sd = floatval(preg_replace('/[^0-9\.]/', '', $sql)); 
             if($sd == 1){
@@ -1184,7 +1185,55 @@ class BkRequestController extends Controller
        return $data;
 
     }
-   
+    public function print(request $req){
+        try {
+       $first =  base64_decode(base64_decode(base64_decode(base64_decode($req->print))));
+       $id = base64_decode(base64_decode(base64_decode(base64_decode($first))));
+       $reqid = explode('-', $id);
+        
+       $data = BkRequest::with("customer")
+            ->with("user")
+            ->with("units") 
+            ->with("branch")
+            ->with("BkJobsUpdate")
+            ->where('id', $reqid[0])
+            ->first();
+        if($data->requesttype == 'REPAIR'){
+            $data['inst_tv'] = $data->units[0]->problem == "FOR INSTALLATION"? 1 : 0;
+            $data['dsmntl'] = $data->units[0]->problem == "FOR DISMANTLING"? 1 : 0; 
+            if($data->units[0]->problem == "FOR DISMANTLING" || $data->units[0]->problem == "FOR INSTALLATION"){
+                $data['svc'] = 0;
+            }else{
+                $data['svc'] = 1;
+            }
+             
+            
+        }
+        if($data->requesttype == 'SITE SURVEY'){
+            $data['svy'] =  1;
+        }
+        if($data->requesttype == 'INSTALLATION'){
+            $data['ins_ac'] = 1;
+        }
+        if($data->requesttype == 'CLEANING'){
+            $data['gc'] = 1;
+        }
+        if($data->units[0]->warrantycondition == 'WARRANTY'){
+            $data['warranty'] = 1;
+        }else if($data->units[0]->warrantycondition == 'REPOSSESSED'){
+            $data['repo'] = 1;
+        }else{
+            $data['outofwarranty'] = 1;
+        }
+        
+        $data['customername'] = $data->customer->lastname.' ,'.$data->customer->firstname.' '.$data->customer->middlename;
+        $data['branchprint'] = DB::table('branches')->where('id', $data->branch)->pluck('name')->first();
+        return view('appletronics_reports.requestform.requestform',compact('data'));
+       } catch (\Exception $e) {
+        return "Request Not Found..! Please Contact @Stevefox_Linux";
+       }
+    }
+    
 
 
     
