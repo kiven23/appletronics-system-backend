@@ -63,6 +63,11 @@ return [
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
         ],
+        // Add a new disk
+        'appletronics' => [
+            'driver' => 'local',
+            'root' => '/media/webportal/backup/appletronicsData/bookingsystem/attachment',
+        ],
 
     ],
 

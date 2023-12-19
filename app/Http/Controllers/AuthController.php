@@ -600,8 +600,49 @@ class AuthController extends Controller
         'icon' => 'mdi-clipboard-check',
         'route' => '/app/booking/jobs',
       ];
-
-    array_push($permission, @$home, @$Administrative, @$book, @$scalate, @$jobs);
+      if (\Auth::user()->hasRole(['Technician Permission'])) {
+        $Technician = [
+          'text' => 'Technician',
+          'icon' => 'business_center',
+          'subLinks' =>
+          [
+            0 =>
+            [
+              'text' => 'Dashboard',
+              'links' =>
+              [
+                0 =>
+                [
+                  'text' => 'CALENDAR',
+                  'icon' => 'account_circle',
+                  'route' => '/app/tech/calendar',
+                ],
+                1 =>
+                [
+                  'text' => 'MY JOB',
+                  'icon' => 'assignment',
+                  'route' => '/app/tech/myjob',
+                ],
+                2 =>
+                [
+                  'text' => 'ITINERARY',
+                  'icon' => 'portrait',
+                  'route' => '/app/tech/itinerary',
+                ],
+                3 =>
+                [
+                  'text' => 'ORDERED PARTS',
+                  'icon' => 'portrait',
+                  'route' => '/app/tech/orderparts',
+                ],
+                 
+              ],
+            ] ,
+            ],
+           
+        ];
+      }
+    array_push($permission, @$home, @$Administrative, @$book, @$scalate, @$jobs, @$Technician);
 
     return array_filter($permission);
   }

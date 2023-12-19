@@ -1,6 +1,20 @@
+ 
+ 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link type="text/css" rel="stylesheet" href="resources/sheet.css" >
-<style type="text/css">.ritz .waffle a { color: inherit; }.ritz .waffle .s1{border-bottom:3px SOLID #000000;background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s5{border-bottom:1px SOLID transparent;border-right:1px SOLID transparent;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s14{border-bottom:1px DOTTED #000000;border-right:1px DOTTED #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s12{border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s16{border-bottom:1px DOTTED #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s17{border-bottom:1px DOTTED #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s9{border-bottom:1px DOTTED #000000;border-right:1px DOTTED #000000;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s7{border-bottom:1px DOTTED #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s29{border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;font-style:italic;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:top;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s8{border-bottom:1px DOTTED #000000;border-right:1px DOTTED #000000;background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s24{border-bottom:1px DOTTED #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;font-style:italic;color:#ff0000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s27{border-bottom:1px DOTTED #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s6{border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s0{background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s21{border-bottom:1px DOTTED #000000;border-right:1px DOTTED #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'Arial';font-size:9pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s25{border-bottom:1px DOTTED #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s22{border-bottom:1px DOTTED #000000;border-right:1px DOTTED #000000;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s19{border-bottom:1px DOTTED #000000;border-right:1px DOTTED #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s11{border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s15{border-bottom:1px DOTTED #000000;border-right:1px DOTTED #000000;background-color:#ffffff;text-align:left;font-weight:bold;font-style:italic;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s4{border-bottom:1px DOTTED #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s10{border-bottom:1px DOTTED #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s2{border-bottom:1px SOLID transparent;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s13{border-bottom:1px DOTTED #000000;border-right:1px DOTTED #000000;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s32{border-bottom:1px DOTTED #000000;border-right:1px DOTTED #000000;background-color:#ffffff;text-align:center;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:bottom;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s3{border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s18{border-bottom:1px DOTTED #000000;border-right:1px DOTTED #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s20{border-bottom:1px DOTTED #000000;border-right:1px DOTTED #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s26{border-bottom:1px DOTTED #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:bottom;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s23{border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;font-style:italic;color:#ff0000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s33{border-right:1px SOLID transparent;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s28{border-bottom:1px DOTTED #000000;border-right:1px DOTTED #000000;background-color:#ffffff;text-align:left;font-weight:bold;font-style:italic;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s30{border-bottom:3px SOLID #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;font-style:italic;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:top;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s31{border-bottom:1px DOTTED #000000;border-right:1px SOLID transparent;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}</style>
+<style type="text/css">.ritz .waffle a { color: inherit; }.ritz .waffle .s1{border-bottom:3px SOLID #000000;background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s5{border-bottom:1px SOLID transparent;border-right:1px SOLID transparent;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s14{border-bottom:1px SOLID #000000;border-right:1px SOLID #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s12{border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s16{border-bottom:1px SOLID #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s17{border-bottom:1px SOLID #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s9{border-bottom:1px SOLID #000000;border-right:1px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s7{border-bottom:1px SOLID #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s29{border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;font-style:italic;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:top;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s8{border-bottom:1px SOLID #000000;border-right:1px SOLID #000000;background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s24{border-bottom:1px SOLID #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;font-style:italic;color:#ff0000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s27{border-bottom:1px SOLID #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s6{border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s0{background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s21{border-bottom:1px SOLID #000000;border-right:1px SOLID #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'Arial';font-size:9pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s25{border-bottom:1px SOLID #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s22{border-bottom:1px SOLID #000000;border-right:1px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s19{border-bottom:1px SOLID #000000;border-right:1px SOLID #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s11{border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s15{border-bottom:1px SOLID #000000;border-right:1px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;font-style:italic;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s4{border-bottom:1px SOLID #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s10{border-bottom:1px SOLID #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s2{border-bottom:1px SOLID transparent;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s13{border-bottom:1px SOLID #000000;border-right:1px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s32{border-bottom:1px SOLID #000000;border-right:1px SOLID #000000;background-color:#ffffff;text-align:center;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:bottom;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s3{border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;font-weight:bold;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s18{border-bottom:1px SOLID #000000;border-right:1px SOLID #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s20{border-bottom:1px SOLID #000000;border-right:1px SOLID #000000;background-color:#ffffff;text-align:left;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s26{border-bottom:1px SOLID #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:center;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:bottom;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s23{border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;font-style:italic;color:#ff0000;font-family:'Arial';font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s33{border-right:1px SOLID transparent;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s28{border-bottom:1px SOLID #000000;border-right:1px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;font-style:italic;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s30{border-bottom:3px SOLID #000000;border-right:3px SOLID #000000;background-color:#ffffff;text-align:left;font-weight:bold;font-style:italic;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:top;white-space:normal;overflow:hidden;word-wrap:break-word;direction:ltr;padding:0px 3px 0px 3px;}.ritz .waffle .s31{border-bottom:1px SOLID #000000;border-right:1px SOLID transparent;background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'docs-Calibri',Arial;font-size:10pt;vertical-align:middle;white-space:nowrap;direction:ltr;padding:0px 3px 0px 3px;}</style>
+<style>
+    @media print {
+           
+
+            /* Set the size of the printed page and adjust margins */
+            @page {
+                size: 240.9mm 295mm; /* Letter size */
+                 /* Adjust margins as needed */
+            }
+        }
+    </style>
+ 
 <div class="ritz grid-container" dir="ltr">
    <table class="waffle" cellspacing="0" cellpadding="0">
       <thead>
@@ -103,29 +117,29 @@
                <div class="row-header-wrapper" style="line-height: 19px"></div>
             </th>
             <td class="s6"></td>
-            <td class="s8">{{$data->svc == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{ $data->svc == 1 ? 'checked' : '' }}></td>
             <td class="s9">SVC</td>
-            <td class="s8">{{$data->inst_tv == 1? '✓':''}}</td>
-            <td class="s9">INS-TV</td>
-            <td class="s8">{{$data->gc == 1? '✓':''}}</td>
-            <td class="s9">GC</td>
-            <td class="s8">{{$data->svy == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->inst_tv == 1? 'checked':''}}></td>
+            <td class="s9">INS-TV/WM</td>
+            <td class="s8">  <input type="checkbox" {{$data->gc == 1? 'checked':''}} ></td>
+            <td class="s9">GC-AC/WM</td>
+            <td class="s8">  <input type="checkbox" {{$data->svy == 1? 'checked':''}}></td>
             <td class="s9">SVY</td>
-            <td class="s8">{{$data->ins_ac == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->ins_ac == 1? 'checked':''}}></td>
             <td class="s9">INS-AC</td>
-            <td class="s8">{{$data->dsmntl == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->dsmntl == 1? 'checked':''}}></td>
             <td class="s10">DSMNTL</td>
-            <td class="s8">{{$data->svc == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->svc == 1? 'checked':''}}></td>
             <td class="s9">SVC</td>
-            <td class="s8">{{$data->inst_tv == 1? '✓':''}}</td>
-            <td class="s9">INS-TV</td>
-            <td class="s8">{{$data->gc == 1? '✓':''}}</td>
-            <td class="s9">GC</td>
-            <td class="s8">{{$data->svy == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->inst_tv == 1? 'checked':''}}></td>
+            <td class="s9">INS-TV/WM</td>
+            <td class="s8">  <input type="checkbox" {{$data->gc == 1? 'checked':''}}></td>
+            <td class="s9">GC-AC/WM</td>
+            <td class="s8">  <input type="checkbox" {{$data->svy == 1? 'checked':''}}></td>
             <td class="s9">SVY</td>
-            <td class="s8">{{$data->ins_ac == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->ins_ac == 1? 'checked':''}}></td>
             <td class="s9">INS-AC</td>
-            <td class="s8">{{$data->dsmntl == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->dsmntl == 1? 'checked':''}}></td>
             <td class="s10">DSMNTL</td>
             <td class="s5"></td>
          </tr>
@@ -468,29 +482,29 @@
                <div class="row-header-wrapper" style="line-height: 19px"></div>
             </th>
             <td class="s6"></td>
-            <td class="s8">{{$data->svc == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{ $data->svc == 1 ? 'checked' : '' }}></td>
             <td class="s9">SVC</td>
-            <td class="s8">{{$data->inst_tv == 1? '✓':''}}</td>
-            <td class="s9">INS-TV</td>
-            <td class="s8">{{$data->gc == 1? '✓':''}}</td>
-            <td class="s9">GC</td>
-            <td class="s8">{{$data->svy == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->inst_tv == 1? 'checked':''}}></td>
+            <td class="s9">INS-TV/WM</td>
+            <td class="s8">  <input type="checkbox" {{$data->gc == 1? 'checked':''}} ></td>
+            <td class="s9">GC-AC/WM</td>
+            <td class="s8">  <input type="checkbox" {{$data->svy == 1? 'checked':''}}></td>
             <td class="s9">SVY</td>
-            <td class="s8">{{$data->ins_ac == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->ins_ac == 1? 'checked':''}}></td>
             <td class="s9">INS-AC</td>
-            <td class="s8">{{$data->dsmntl == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->dsmntl == 1? 'checked':''}}></td>
             <td class="s10">DSMNTL</td>
-            <td class="s8">{{$data->svc == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->svc == 1? 'checked':''}}></td>
             <td class="s9">SVC</td>
-            <td class="s8">{{$data->inst_tv == 1? '✓':''}}</td>
-            <td class="s9">INS-TV</td>
-            <td class="s8">{{$data->gc == 1? '✓':''}}</td>
-            <td class="s9">GC</td>
-            <td class="s8">{{$data->svy == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->inst_tv == 1? 'checked':''}}></td>
+            <td class="s9">INS-TV/WM</td>
+            <td class="s8">  <input type="checkbox" {{$data->gc == 1? 'checked':''}}></td>
+            <td class="s9">GC-AC/WM</td>
+            <td class="s8">  <input type="checkbox" {{$data->svy == 1? 'checked':''}}></td>
             <td class="s9">SVY</td>
-            <td class="s8">{{$data->ins_ac == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->ins_ac == 1? 'checked':''}}></td>
             <td class="s9">INS-AC</td>
-            <td class="s8">{{$data->dsmntl == 1? '✓':''}}</td>
+            <td class="s8">  <input type="checkbox" {{$data->dsmntl == 1? 'checked':''}}></td>
             <td class="s10">DSMNTL</td>
             <td class="s5"></td>
          </tr>
@@ -831,9 +845,20 @@
       </tbody>
    </table>
 </div>
+ 
+ 
+ 
 <script>
-        // Add the print function to be triggered when the page loads
         window.onload = function() {
             window.print();
         };
-    </script>
+</script>
+<style>
+   body {
+            max-width: 60%;
+            margin-top: 34; 
+            margin-left: 18;/* Remove default margin */
+            padding: 0; /* Remove default padding */
+        }
+
+   </style>

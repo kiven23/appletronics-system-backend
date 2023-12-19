@@ -132,7 +132,9 @@ class BkRequestController extends Controller
                 $CustomerDATA->save();
                 
                 if(@$req->file("attachment")){
-                $path = Storage::putFile('BookingSystemAttachments',$req->file("attachment"));
+                // $path = Storage::putFile('BookingSystemAttachments',$req->file("attachment"));
+                // $name = $req->file("attachment")->getClientOriginalName();
+                $path = Storage::disk('appletronics')->putFile('/', $req->file('attachment'));
                 $name = $req->file("attachment")->getClientOriginalName();
                 }else{
                 $path = $req->attachment;
@@ -398,11 +400,40 @@ class BkRequestController extends Controller
        return response()->json($check);
     }
     public function downloadsales(request $req){
-        $path = BkRequest::where('id', $req->id)
+        // $path = BkRequest::where('id', $req->id)
+        //         ->pluck("attachment")
+        //         ->first();
+        //  $file = '../storage/app/'.$path;
+        // return response()->download($file);
+        try {
+            $path = BkRequest::where('id', $req->id)
                 ->pluck("attachment")
                 ->first();
-         $file = '../storage/app/'.$path;
-        return response()->download($file);
+        
+            $file = '../storage/app/' . $path;
+        
+            // Try to download from the initial path
+            return response()->download($file);
+        } catch (\Exception $e) {
+            // Log the exception or handle it as needed
+            \Log::error("Error downloading file from initial path: " . $e->getMessage());
+        
+            // If there's an error, fallback to a different path
+            try {
+                $fallbackPath = '/media/webportal/backup/appletronicsData/bookingsystem/attachment';
+                $file = $fallbackPath . '/' . $path;
+        
+                // Try to download from the fallback path
+                return response()->download($file);
+            } catch (\Exception $fallbackException) {
+                // Log the fallback exception or handle it as needed
+                \Log::error("Error downloading file from fallback path: " . $fallbackException->getMessage());
+        
+                // Return a custom error response if both paths fail
+                return response()->json(['error' => 'Failed to download file.'], 500);
+            }
+        }
+        
     }
     public function restore(request $req){
         function ex($e){
@@ -1233,7 +1264,17 @@ class BkRequestController extends Controller
         return "Request Not Found..! Please Contact @Stevefox_Linux";
        }
     }
-    
+    public function uploadtest(request $req){
+      
+        if(@$req->file("attachment")){
+            $path = Storage::disk('appletronics')->putFile('/', $req->file('attachment'));
+            $name = $req->file("attachment")->getClientOriginalName();
+            }else{
+            $path = $req->attachment;
+            $name = $req->attachmentN;
+        }
+        return  $path;
+    }
 
 
     

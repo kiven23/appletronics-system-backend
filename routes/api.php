@@ -405,3 +405,4 @@ Route::get('/testing/sapapi', 'BkRequestController@dbug');
 
 //PRINT REQUEST FORM
 Route::get('/appletronics/reports/requestform', 'BkRequestController@print');
+Route::post('/testing/uploadtest', 'BkRequestController@uploadtest')->name('app.uploadtest.uploadtest');
