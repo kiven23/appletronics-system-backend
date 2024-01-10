@@ -406,3 +406,8 @@ Route::get('/testing/sapapi', 'BkRequestController@dbug');
 //PRINT REQUEST FORM
 Route::get('/appletronics/reports/requestform', 'BkRequestController@print');
 Route::post('/testing/uploadtest', 'BkRequestController@uploadtest')->name('app.uploadtest.uploadtest');
+
+///APPLETRONICS TECHNICIAN
+Route::group(['prefix' => '/technician' ], function () {
+	Route::get('/myjobs', 'BkTechnicianController@myjob')->name('app.tech.system.myjobs');
+});
