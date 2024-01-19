@@ -608,28 +608,34 @@ class AuthController extends Controller
           [
             0 =>
             [
-              'text' => 'Dashboard',
+              'text' => 'DASHBOARD',
               'links' =>
               [
                 0 =>
+                [
+                  'text' => 'DASHBOARD',
+                  'icon' => 'account_circle',
+                  'route' => '/app/tech/dashboard',
+                ],
+                1 =>
                 [
                   'text' => 'CALENDAR',
                   'icon' => 'account_circle',
                   'route' => '/app/tech/calendar',
                 ],
-                1 =>
+                2 =>
                 [
                   'text' => 'MY JOB',
                   'icon' => 'assignment',
                   'route' => '/app/tech/myjob',
                 ],
-                2 =>
+                4 =>
                 [
                   'text' => 'ITINERARY',
                   'icon' => 'portrait',
                   'route' => '/app/tech/itinerary',
                 ],
-                3 =>
+               5 =>
                 [
                   'text' => 'ORDERED PARTS',
                   'icon' => 'portrait',
@@ -638,6 +644,20 @@ class AuthController extends Controller
                  
               ],
             ] ,
+            1 =>
+            [
+              'text' => 'ADMIN',
+              'links' =>
+              [
+                0 =>
+                [
+                  'text' => 'JOBS QUEUE',
+                  'icon' => 'account_circle',
+                  'route' => '/app/tech/admin/jobs',
+                ] 
+                 
+              ],
+            ] 
             ],
            
         ];

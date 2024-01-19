@@ -410,4 +410,5 @@ Route::post('/testing/uploadtest', 'BkRequestController@uploadtest')->name('app.
 ///APPLETRONICS TECHNICIAN
 Route::group(['prefix' => '/technician' ], function () {
 	Route::get('/myjobs', 'BkTechnicianController@myjob')->name('app.tech.system.myjobs');
+	Route::post('/myjobs/insert', 'BkTechnicianController@insert')->name('app.tech.system.myjobs.insert');
 });
