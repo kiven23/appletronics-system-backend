@@ -25,5 +25,7 @@ class BkRequest extends Model
     public function BkJobsUpdate(){
         return $this->hasMany(BkJobsUpdate::class, 'requestid', 'requestid');
     }
-    
+    public function attachfiles(){
+        return $this->hasMany(BkAttachment::class, 'attachment_id', 'id');
+    }
 }

@@ -11,6 +11,7 @@ use App\BkRequest;
 use App\BkUnits;
 use App\BkCustomerInfo;
 use App\BkCustomerHistory;
+use App\BkAttachment;
 use hash;
 use GuzzleHttp\Client;
 use App\user;
@@ -51,10 +52,15 @@ class BkRequestController extends Controller
         return $arr;
     }
     
-    public function history($req){
+    public function history($i,$req){
         if($req->cpnumber){
             $check = BkCustomerHistory::where("cpnumber", $req->cpnumber)->pluck('id')->first();
             if(!$check){
+                if($i == 1){
+                    $CustomerDATA = BkCustomerHistory::where('cpnumber', $req->cpnumber)->first();
+                }else{
+                    $CustomerDATA = new BkCustomerHistory();
+                }
                 $CustomerDATA = new BkCustomerHistory();
                 $CustomerDATA->firstname =  ucfirst(@$req->firstname);
                 $CustomerDATA->lastname  = ucfirst(@$req->lastname);
@@ -72,7 +78,11 @@ class BkRequestController extends Controller
                 $CustomerDATA->specialinstruction = @$req->specialinstruction;
                 $CustomerDATA->street = @$req->street;
                 $CustomerDATA->telephoneno = @$req->telephoneno;
+                if($i == 1){
+                $CustomerDATA->update();
+                }else{
                 $CustomerDATA->save();
+                }
             } 
             if($check){
                 $CustomerDATA = BkCustomerHistory::find($check);
@@ -100,8 +110,28 @@ class BkRequestController extends Controller
     public function store(request $req){
         
 
-
-        
+        function attachment($attachment_id, $attachment_type, $req){
+            $name = $req->file("file")->getClientOriginalName();
+            if($name){
+                $checknameexist = DB::table('bk_attachments')->where('name', $attachment_id.'-'.$name)->pluck('name')->first();
+                if(!$checknameexist){
+                        $path = Storage::disk('appletronics')->putFile('/', $req->file('file'));
+                    
+                        DB::table('bk_attachments')->insert([
+                            'attachment_id' => $attachment_id,
+                            'attachment_type' => $attachment_type,
+                            'attachment_loc' => $path,
+                            'name' => $attachment_id.'-'.$name
+                    ]);
+                    $getData =  DB::table('bk_attachments')->where('attachment_id', $attachment_id)->get();
+                    return response()->json(["msg"=>'The File has been Uploaded Successful '.$name, "color"=> 'success', 'data'=>  $getData]);
+                }else{
+                    return response()->json(["msg"=>'The File Already Exist '.$name, "color"=> 'warning']);
+                }
+            }
+            
+            }
+                    
          $checkData = BkRequest::where('requestid', $req->requestid)->pluck('requestid')->first();
         //CUSTOMER
         try{
@@ -169,6 +199,8 @@ class BkRequestController extends Controller
                 $RequestDATA->ifseries = 1;
                 $RequestDATA->save();
                 
+                
+                
 
                 $branchid = \Auth::user()->branch_id;
                 $branch = DB::table("branches")->where("id", $branchid)->pluck("sapcode")->first();
@@ -211,14 +243,16 @@ class BkRequestController extends Controller
                     $units->warrantycondition = @$data->warrantycondition;
                     $units->withpowersupply = @$data->withpowersupply;
                     $units->save();
-                    
+                    if($req->file("file")){
+                        attachment($RequestDATA->id, 0, @$req);
+                        }
                 }
-                $this->history($req);
+                $this->history(0,$req);
                 if($req->restoreid){
                     $this->close($req->restoreid);
                 }
-                 
-                return response()->json(['ref'=>$ticketno, 'iden'=>  @$req->identify == 1? 0:5, 'msg' => 'Success']);
+                $bname = DB::table("branches")->where("id", $branchid)->pluck("name")->first();
+                return response()->json(['branch'=> $bname,'ref'=>$ticketno, 'iden'=>  @$req->identify == 1? 0:5, 'msg' => 'Success']);
             } 
                 return response()->json(['ref'=> '', 'iden'=> 1,'msg' => 'File Exist']);
                     }catch(\Exception $e){
@@ -226,19 +260,29 @@ class BkRequestController extends Controller
                     }
                 
     }
+    public function attachment(request $req){
+            return $req;
+    }
     public function jobs(request $req){
-
+            $i = 0;
             if(@$req->id){
                    if($req->id == 3){
                     $status = 10;
+                   }elseif($req->id == 5){
+                    $i = 5;
+                    $status = 1;
+                   }elseif($req->id == 4){
+                    
+                    $status = 4;
                    }else{
                     $status = @$req->id;
+                    $i = 6;
                    }
                      
             }else{
                     $status = 0;
             }
-
+              
             //$this->syncSapBookingSched();
 
             if(\Auth::user()->Branch->id == 5){
@@ -257,18 +301,19 @@ class BkRequestController extends Controller
                 if(\Auth::user()->hasRole(['AREASALL'])){
                     $region = 4;
                 }
-            
+                $completed = ['Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
                 $branches = DB::table("branches")
                                 ->where('region_id', $region)->pluck('id'); 
 
                    $data = BkRequest::with(['customer'=> function($q){
                     $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
                   }])
+                        ->with('attachfiles')
                         ->with("user")
                         ->with("branch")
                         ->with("units")
                         ->with("BkJobsUpdate")
-                        ->where(function ($query) use($branches, $region) {
+                        ->where(function ($query) use($branches, $region) { 
                             if($region !== 4){
                                 for ($i = 0; $i < count($branches); $i++){
                                     $query->orwhere('branch',   $branches[$i]);
@@ -276,17 +321,32 @@ class BkRequestController extends Controller
                         }
                         )
                         ->where("status",  $status)
+                        ->when($i == 5, function ($query)use($completed)  {
+                            return $query->whereIn('reason' , $completed);   
+                        })
+                        ->when($i == 6, function ($query)use($completed)  {
+                            return $query->whereNotIn('reason' , $completed);   
+                        })
+                         
                         ->orderby("created_at","DESC")
                     ->get();
             }else{
+                $completed = ['Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
                 $data = BkRequest::with(['customer'=> function($q){
                     $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
                   }])
+                ->with('attachfiles')
                 ->with("user")
                 ->with("branch")
                 ->with("units")
                 ->with("BkJobsUpdate")
                 ->where("status", $status)
+                ->when($i == 5, function ($query)use($completed)  {
+                    return $query->whereIn('reason' , $completed);   
+                })
+                ->when($i == 6, function ($query)use($completed)  {
+                    return $query->whereNotIn('reason' , $completed);   
+                })
                 ->where("branch", \Auth::user()->Branch->id)
                 ->orderby("created_at","DESC")
                 ->get();
@@ -315,7 +375,7 @@ class BkRequestController extends Controller
             if(\Auth::user()->hasRole(['AREASALL'])){
                 $region = 4;
             }
-            
+            $completed = ['Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
             $branches = DB::table("branches")
                              ->where('region_id', $region)->pluck('id'); 
                              
@@ -327,13 +387,25 @@ class BkRequestController extends Controller
                     }}
             })
             ->get();
+
+            //pending
             $ACCEPTED = DB::table("bk_requests")->where("status", 1)
             ->where(function ($query) use($branches, $region) {
                 if($region !== 4){
                     for ($i = 0; $i < count($branches); $i++){
                         $query->orwhere('branch',   $branches[$i]);
                     }}
-            })->get();
+            })->whereNotIn('reason' , $completed)->get();
+            //completed
+            $COMPLETED = DB::table("bk_requests")->where("status", 1)
+            ->where(function ($query) use($branches, $region) {
+                if($region !== 4){
+                    for ($i = 0; $i < count($branches); $i++){
+                        $query->orwhere('branch',   $branches[$i]);
+                    }}
+            })->whereIn('reason' , $completed)->get();
+
+            
             $ASC = DB::table("bk_requests")->where("status", 2)
             ->where(function ($query) use($branches, $region) {
                 if($region !== 4){
@@ -348,48 +420,70 @@ class BkRequestController extends Controller
                         $query->orwhere('branch',   $branches[$i]);
                     }}
             })->get();
+            $HOLD = DB::table("bk_requests")->where("status", 4)
+            ->where(function ($query) use($branches, $region) {
+                if($region !== 4){
+                    for ($i = 0; $i < count($branches); $i++){
+                        $query->orwhere('branch',   $branches[$i]);
+                    }}
+            })->get();
             $ARRAYDATA = ["unsigned"=>count($UNSIGM),
                             "accepted"=> count($ACCEPTED),
                             "asc"=>count($ASC),
+                            "completed"=>count($COMPLETED),
+                            "hold"=>count($HOLD),
                             "rejected"=>count($REJECTED)];
 
         }else{
+            $completed = ['Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
             $UNSIGM = DB::table("bk_requests")->where("status", 0)->where("branch", \Auth::user()->Branch->id)->get();
-            $ACCEPTED = DB::table("bk_requests")->where("status", 1)->where("branch", \Auth::user()->Branch->id)->get();
+            $ACCEPTED = DB::table("bk_requests")->where("status", 1)->where("branch", \Auth::user()->Branch->id)->whereIn('reason' , $completed)->get();
+            $COMPLETED = DB::table("bk_requests")->where("status", 1)->where("branch", \Auth::user()->Branch->id)->whereNotIn('reason' , $completed)->get();
             $ASC = DB::table("bk_requests")->where("status", 2)->where("branch", \Auth::user()->Branch->id)->get();
             $REJECTED = DB::table("bk_requests")->where("status", 10)->where("branch", \Auth::user()->Branch->id)->get();
+            $HOLD = DB::table("bk_requests")->where("status", 4)->where("branch", \Auth::user()->Branch->id)->get();
+
             $ARRAYDATA = ["unsigned"=>count($UNSIGM),
                             "accepted"=> count($ACCEPTED),
+                            "completed"=>count($COMPLETED),
                             "asc"=>count($ASC),
+                            "hold"=>count($HOLD),
                             "rejected"=>count($REJECTED)];
         }
        return $ARRAYDATA;
     }
 
     public function action(request $req){
-    
+         
       try{
-        // if($req->data['status'] == 'Unassigned'){
-        //     $status = 0;
-        // }
-        // if($req->data['status'] == 'Accepted'){
-        //     $status = 1;
-        // }
-        // if($req->data['status'] == 'Dispatch to Other ASC'){
-        //     $status = 2;
-        // }
-        $update = BkRequest::where("requestid", $req->data['requestID'])->first();
-        $update->status = 0;
-        $update->callid = $req->data['callid'];
-        if($req->data['callid']){
-            $update->notify = 6;
+   
+        $update = BkRequest::where("id", @$req->data['realid'])->first();
+        if($req->data['status'] == 4 || $req->data['status'] == 10){
+            
+           $update->status = $req->data['identifier'] == 4 ||  $req->data['identifier'] == 10 ? $req->data['status'] == 4? 0: 10 : $req->data['status'];
+            $update->notes = $req->data['reason'];
+        }else{
+            
+            $check = BkRequest::where("callid", $req->data['callid'])->first();
+            if(!$check){
+                $update->callid = $req->data['callid'];
+                $ch = 1;
+            }else{
+                $ch = 0;
+            }
+            $update->status = 0;
+          
+            if($req->data['callid']){
+                $update->notify = 6;
+            }
         }
-       // $update->installer = $req->data['installer'];
-        //$update->installationdate = $req->data['installationData'];
+         
+         
 
         $update->update();
-       $msg = ["msg"=> 'Job '.$req->data['requestID'].' Success Updated', "error"=> 'success', "type"=>1];
+       $msg = ["msg"=> 'Job '.$req->data['requestID'].' Success Updated', "error"=> 'success', "type"=>1, "ch" => @$ch];
        }catch(\Exception $e){
+        return $e;
         $msg = ["msg"=>  $e, "error"=> 'error'];
        }
        return $msg;
@@ -400,39 +494,51 @@ class BkRequestController extends Controller
        return response()->json($check);
     }
     public function downloadsales(request $req){
-        // $path = BkRequest::where('id', $req->id)
-        //         ->pluck("attachment")
-        //         ->first();
-        //  $file = '../storage/app/'.$path;
-        // return response()->download($file);
+      
         try {
             $path = BkRequest::where('id', $req->id)
                 ->pluck("attachment")
                 ->first();
         
-            $file = '../storage/app/' . $path;
-        
-            // Try to download from the initial path
+             
+            $fallbackPath = '/media/webportal/backup/appletronicsData/bookingsystem';
+            $file = $fallbackPath .'/'. $path;
+          
             return response()->download($file);
         } catch (\Exception $e) {
-            // Log the exception or handle it as needed
+           
             \Log::error("Error downloading file from initial path: " . $e->getMessage());
         
-            // If there's an error, fallback to a different path
+           
             try {
                 $fallbackPath = '/media/webportal/backup/appletronicsData/bookingsystem/attachment';
                 $file = $fallbackPath . '/' . $path;
         
-                // Try to download from the fallback path
+                
                 return response()->download($file);
             } catch (\Exception $fallbackException) {
-                // Log the fallback exception or handle it as needed
+          
                 \Log::error("Error downloading file from fallback path: " . $fallbackException->getMessage());
         
-                // Return a custom error response if both paths fail
+               
                 return response()->json(['error' => 'Failed to download file.'], 500);
             }
         }
+        
+    }
+    public function additional(request $req){
+                 
+         
+                $path = BkAttachment::where('id', $req->id)
+                ->pluck("attachment_loc")
+                ->first();
+                $fallbackPath = '/media/webportal/backup/appletronicsData/bookingsystem/attachment';
+                $file = $fallbackPath . '/' . $path;
+        
+                
+                return response()->download($file);
+       
+      
         
     }
     public function restore(request $req){
@@ -640,7 +746,7 @@ class BkRequestController extends Controller
  
     }
     public function syncSapBookingSched(){
-
+        
  
         function calendar($sch){
               
@@ -707,11 +813,23 @@ class BkRequestController extends Controller
             } 
         }
         # NEW CODE =========================================
-       $callID  =  DB::table("bk_requests")->whereNotNull("callid")->select("callid")->get()->toArray();
+        $completed = ['Cancelled','Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
+        $callID = DB::table("bk_requests")
+        ->whereNotNull("callid")
+        // ->where(function($query) use ($completed) {
+        //     $query->whereNotIn('reason', $completed)
+        //           ->orWhereNull('reason');
+        // })
+        ->where('status', 0)
+        ->select("callid")
+        ->get()
+        ->toArray();
+        //return $callID  =  DB::table("bk_requests")->whereNotNull("callid")->select("callid")->whereNotIn('reason' , $completed)->get()->toArray();
         $sapData = array_filter(array_map(function($sData) {
             return sapDataConnect($sData->callid);
         }, $callID));
        $db = array_filter($sapData);
+       
         #END CODE =========================================
         function Times($schedule,$time){
             if($time && $schedule){
@@ -763,6 +881,7 @@ class BkRequestController extends Controller
  
         // $dd = [];
         // $reset_index = 12;  
+     
        foreach($db as $index=>$up){
        
         if($up->U_SchedDate){
@@ -776,7 +895,8 @@ class BkRequestController extends Controller
         $technician = strtoupper($up->techL.', '.$up->techF);
  
         #FORACCEPT
-        if($schedule && $technician && $up->Stat !== 'Closed07'){
+        if($schedule && $technician && $up->Stat !== 'Closed07' ||  $up->Stat == 'Closed05' ||  $up->Stat == 'Closed06' ||  $up->Stat == 'Pending15'
+        ||  $up->Stat == 'Closed03' ||  $up->Stat == 'Closed08'){
               DB::table("bk_requests")->where("callid", $up->callID)->update([
                       'installationdate' =>  Times($schedule, $up->comTime),
                       'installer'=> $technician,
@@ -1025,20 +1145,20 @@ class BkRequestController extends Controller
     public function execute(){
        
        // NEWPROD
-        $database = [
-              "ReportsOptn",
-              "SteadfordReports",
-              "OutexcelReports",
-              "AppliantechReports",
-              "ElectroloopReports",
-              "ThreathonsReports",
-              "PanApplianceReports",
-              "EasyToOwnReports"
-        ];
+        // $database = [
+        //       "ReportsOptn",
+        //       "SteadfordReports",
+        //       "OutexcelReports",
+        //       "AppliantechReports",
+        //       "ElectroloopReports",
+        //       "ThreathonsReports",
+        //       "PanApplianceReports",
+        //       "EasyToOwnReports"
+        // ];
        // SERVICEPROD
-    //    $database = [
-    //      "SERVICEPROD"
-    //    ];
+         $database = [
+          "SERVICEPROD"
+      ];
         function remove($sql){
           $sd = floatval(preg_replace('/[^0-9\.]/', '', $sql)); 
             if($sd == 1){
@@ -1099,12 +1219,12 @@ class BkRequestController extends Controller
  
 
     // return  DB::connection("sqlsrv3")->table("UFD1")->where("TableID", "ASCL")->get();
-   //  return "Hold";
+    //return "Hold";
     
     return $this->syncSapBookingSched();
     return   DB::connection("sqlsrv3")->table("OSCL")
        ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
-       ->join("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
+       ->leftJoin("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
        ->join("OCLG", 'OSCL.callID', '=', 'OCLG.parentId' )
        ->join("UFD1", 'OSCL.U_CallStatusReason', '=', 'UFD1.FldValue')
        ->select(\DB::raw(
@@ -1125,7 +1245,8 @@ class BkRequestController extends Controller
       // ->whereNull('OSCL.U_SchedDate')
       // ->latest("OSCL.U_SchedDate")
         //->take(10)
-        ->where("OSCL.callID", '120124')
+        //->where('OSCL.U_CallStatusReason','Pending05')
+       ->where("OSCL.callID", 187957 )
        // ->whereYear("OSCL.U_SchedDate", '2022')
        // ->whereMonth("OSCL.U_SchedDate", '>=','08')
        ->get();
@@ -1150,7 +1271,45 @@ class BkRequestController extends Controller
     
     public function dbug(){
 
-       
+        function sapDataConnect($callid){
+            $dd = DB::connection("sqlsrv3")->table("OSCL")
+              ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
+              ->leftjoin("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
+              ->join("OCLG", 'OSCL.callID', '=', 'OCLG.parentId' )
+              ->join("UFD1", 'OSCL.U_CallStatusReason', '=', 'UFD1.FldValue')
+              ->select(\DB::raw("OINS.custmrName as CustomerName"), 
+                              "OINS.street as contactnumber",
+                              "OINS.zip as zip",
+                              "OINS.city as city",
+                              "OINS.country as country",
+                              "OINS.state as state",
+                              "OSCL.U_SchedDate as U_SchedDate",
+                              "OSCL.U_comTime as comTime",
+                              "OSCL.callID as callID",
+                              "OHEM.lastName as techL",
+                              "OHEM.firstName as techF",
+                              "OSCL.U_CallStatusReason as Stat",
+                              "UFD1.Descr as reason",
+                              "OCLG.Notes",
+                              "OCLG.ClgCode"           
+              )
+              //->latest("OSCL.U_SchedDate")
+              ->where("OSCL.callID", $callid)
+              ->orderBy("OCLG.ClgCode", "asc")
+              ->get()
+              ->last();
+          if($dd){
+              return $dd; 
+          } 
+      }
+      # NEW CODE =========================================
+      $callID  =  DB::table("bk_requests")->whereNotNull("callid")->select("callid")->take(10)->get()->toArray();
+      $sapData = array_filter(array_map(function($sData) {
+          return sapDataConnect($sData->callid);
+      }, $callID));
+
+      $db = array_filter($sapData);
+      return $db;
          //=============================>
         
         $branchid = \Auth::user()->branch_id;
@@ -1264,16 +1423,404 @@ class BkRequestController extends Controller
         return "Request Not Found..! Please Contact @Stevefox_Linux";
        }
     }
-    public function uploadtest(request $req){
-      
-        if(@$req->file("attachment")){
-            $path = Storage::disk('appletronics')->putFile('/', $req->file('attachment'));
-            $name = $req->file("attachment")->getClientOriginalName();
+
+    
+
+    public function uploadadditional(request $req){
+        function attachment($attachment_id, $attachment_type, $req){
+                  $name = $req->file("file")->getClientOriginalName();
+               $checknameexist = DB::table('bk_attachments')->where('name', $attachment_id.'-'.$name)->pluck('name')->first();
+            if(!$checknameexist){
+                    $path = Storage::disk('appletronics')->putFile('/', $req->file('file'));
+                
+                    DB::table('bk_attachments')->insert([
+                        'attachment_id' => $attachment_id,
+                        'attachment_type' => $attachment_type,
+                        'attachment_loc' => $path,
+                        'name' => $attachment_id.'-'.$name
+                ]);
+                $getData =  DB::table('bk_attachments')->where('attachment_id', $attachment_id)->get();
+                return response()->json(["msg"=>'The File has been Uploaded Successful '.$name, "color"=> 'success', 'data'=>  $getData]);
             }else{
-            $path = $req->attachment;
-            $name = $req->attachmentN;
+                return response()->json(["msg"=>'The File Already Exist '.$name, "color"=> 'warning']);
+            }
         }
-        return  $path;
+        $getID = BkRequest::where('requestid', $req->id)->pluck('id')->first();
+         
+        return attachment($getID ,1 ,$req);
+        
+   
+    }
+    public function storetest(request $req){
+        
+          
+        function attachment($attachment_id, $attachment_type, $req){
+            $name = $req->file("file")->getClientOriginalName();
+            $checknameexist = DB::table('bk_attachments')->where('name', $attachment_id.'-'.$name)->pluck('name')->first();
+                if(!$checknameexist){
+                        $path = Storage::disk('appletronics')->putFile('/', $req->file('file'));
+                    
+                        DB::table('bk_attachments')->insert([
+                            'attachment_id' => $attachment_id,
+                            'attachment_type' => $attachment_type,
+                            'attachment_loc' => $path,
+                            'name' => $attachment_id.'-'.$name
+                    ]);
+                    $getData =  DB::table('bk_attachments')->where('attachment_id', $attachment_id)->get();
+                    return response()->json(["msg"=>'The File has been Uploaded Successful '.$name, "color"=> 'success', 'data'=>  $getData]);
+                }else{
+                    return response()->json(["msg"=>'The File Already Exist '.$name, "color"=> 'warning']);
+                }
+            }
+           
+         $checkData = BkRequest::where('requestid', $req->requestid)->pluck('requestid')->first();
+        //CUSTOMER
+        try{
+             
+            if(!$checkData){
+                  
+                $CustomerDATA = new BkCustomerInfo();
+                $CustomerDATA->firstname = ucfirst(@$req->firstname);
+                $CustomerDATA->lastname  = ucfirst(@$req->lastname);
+                $CustomerDATA->middlename  = ucfirst(@$req->middlename);
+                $CustomerDATA->barangay  = @$req->barangay;
+                 
+                $CustomerDATA->region_id  =  $this->regionMap($req->region)['id'];
+                 
+                $CustomerDATA->region_name  = $this->regionMap($req->region)['name'];
+               
+                $CustomerDATA->contactperson = @$req->contactperson? @$req->contactperson : 'N/A';
+                $CustomerDATA->cpnumber = @$req->cpnumber;
+                
+                $CustomerDATA->emailaddress = @$req->emailaddress?@$req->emailaddress : 'N/A';
+                $CustomerDATA->houseno = @$req->houseno?@$req->houseno : 'N/A';
+                $CustomerDATA->mcity = @$req->mcity? @$req->mcity : 'N/A';
+                $CustomerDATA->organization = @$req->organization? @$req->organization : 'N/A';
+                $CustomerDATA->province = @$req->province? @$req->province : 'N/A';
+                $CustomerDATA->specialinstruction = @$req->specialinstruction? @$req->specialinstruction : 'N/A';
+                $CustomerDATA->street = @$req->street?@$req->street : 'N/A';
+                $CustomerDATA->telephoneno = @$req->telephoneno?@$req->telephoneno : 'N/A';
+                $CustomerDATA->save();
+                
+                if(@$req->file("attachment")){
+                // $path = Storage::putFile('BookingSystemAttachments',$req->file("attachment"));
+                // $name = $req->file("attachment")->getClientOriginalName();
+                $path = Storage::disk('appletronics')->putFile('/', $req->file('attachment'));
+                $name = $req->file("attachment")->getClientOriginalName();
+                }else{
+                $path = $req->attachment;
+                $name = $req->attachmentN;
+                }
+                 
+                //REQUEST
+                $RequestDATA = new BkRequest();
+                $RequestDATA->filename = $name;
+                $RequestDATA->requestid = @$req->requestid;
+                $RequestDATA->requesttype = @$req->requestType;
+                $RequestDATA->customerid = @$CustomerDATA->id;
+                $RequestDATA->landmark = @$req->landmark;
+                $RequestDATA->bookby = @$req->bookby;
+                $RequestDATA->status = @$req->identify == 1? 0 : 5;
+                $RequestDATA->identify = @$req->requestType.'/'.@\Auth::user()->branch_id.'/'.@\Auth::user()->id;
+                $RequestDATA->branch = @\Auth::user()->branch_id;
+                $RequestDATA->userid = @\Auth::user()->id;
+                $RequestDATA->unitid = @md5($req->requestid); 
+                $RequestDATA->attachment = @$path;
+                
+                //LOCATION UNIT  
+                $RequestDATA->locandorg = @$req->locanorg? @$req->locanorg :'N/A';
+                // AND NAME OF ORGANIZATION
+                $RequestDATA->organizationname = @$req->orgname? @$req->orgname : 'N/A' ;
+                //SURVEY LOCATION
+                $RequestDATA->surveyloc = @$req->surveylocation? @$req->surveylocation : 'N/A';
+
+                $RequestDATA->additionalrequest1 = @$req->additionalrequest1;
+                $RequestDATA->additionalrequest2 = @$req->additionalrequest2;
+                $RequestDATA->specialinstruction = @$req->specialinstruction;
+                $RequestDATA->ifseries = 1;
+                $RequestDATA->save();
+                 
+                
+                
+
+                $branchid = \Auth::user()->branch_id;
+                $branch = DB::table("branches")->where("id", $branchid)->pluck("sapcode")->first();
+                //GET STARTING SERIES AT BRANCH
+                $getstarting = DB::table("branches")->where("id", $branchid)->pluck("seriesno")->first();
+                $ticketno = substr($branch,0,4).'-'.sprintf("%06s",$getstarting+1);
+        
+                //UPDATE SERIES AT BRANCH TO USED NEXT SERIES IF INPUT ANOTHER ONE
+                DB::table("branches")->where("id", $branchid)->update([
+                    "seriesno" => sprintf("%06s",$getstarting+1)
+                ]);
+                DB::table("bk_requests")->where("id", $RequestDATA->id)->update([
+                    "ticketno" => $ticketno
+                ]);
+                foreach(json_decode($req->units) as $data) {
+                    $units = new BkUnits;
+                    $units->unitid = md5($req->requestid);
+                    $units->appliancetype = @$data->appliancetype;
+                    $units->area = @$data->area;
+                    $units->brand = @$data->brand;
+                    $units->datepurchase = @$data->datepurchase;
+                    $units->deliverydate = @$data->deliverydate;
+                    $units->demandreplacement = @$data->demandreplacement;
+                    $units->level = @$data->level;
+                    $units->location = @$data->location;
+                    $units->propertytype = @$data->propertytype;
+                    //INSTALLATION ADDRESS
+                    $units->locationofinstallation = $data->locationofinstallation === 0 ?@$req->barangay.','.@$req->mcity.','.@$req->province:  $data->locationofinstallation;
+                    $units->model = @$data->model;
+                    $units->paidamoun = @$data->paidamoun;
+                    $units->priority = @$data->priority;
+                    $units->prodcategories = @$data->prodcategories;
+                    $units->ornumber = @$data->ornumber;
+                    $units->qty = @$data->qty;
+                    $units->problem = @$data->problem;
+                    $units->serialno = @$data->serialno;
+                    $units->time  = @$data->time->HH.':'.@$data->time->mm;
+                    $units->unitcondition = @$data->unitcondition;
+                    $units->wallfinish = @$data->wallfinish;
+                    $units->warrantycondition = @$data->warrantycondition;
+                    $units->withpowersupply = @$data->withpowersupply;
+                    $units->save();
+                    if($req->file("file")){
+                    attachment($RequestDATA->id, 0, @$req);
+                    }
+                }
+                $this->history(0,$req);
+                if($req->restoreid){
+                    $this->close($req->restoreid);
+                }
+                 
+                return response()->json(['ref'=>$ticketno, 'iden'=>  @$req->identify == 1? 0:5, 'msg' => 'Success']);
+            } 
+                return response()->json(['ref'=> '', 'iden'=> 1,'msg' => 'File Exist']);
+                    }catch(\Exception $e){
+                        return response()->json($e);
+                    }
+                
+    }
+
+    public function rebook(request $req){
+       //$customerId = DB::table('bk_requests')->where('requestid', $req->id)->pluck('customerid')->first();
+      return $data = BkRequest::with("customer")
+                        ->with("user")
+                        ->with("units")
+                        ->with('attachfiles')
+                        ->where('requestid',  $req->id)
+                        ->get();
+                            
+    }
+    public function rebookrequest(request $req){
+        
+       
+        $getID = BkRequest::where('requestid', $req->rebookid)->first();
+        $unitID = BkUnits::where('unitid', $getID->unitid)->pluck('id')->first();
+        $customerid = BkRequest::where('requestid', $req->rebookid)->pluck('customerid')->first();
+        function attachment($attachment_id, $attachment_type, $req){
+            $name = $req->file("file")->getClientOriginalName();
+            if($name){
+                $checknameexist = DB::table('bk_attachments')->where('name', $attachment_id.'-'.$name)->pluck('name')->first();
+                if(!$checknameexist){
+                        $path = Storage::disk('appletronics')->putFile('/', $req->file('file'));
+                    
+                        DB::table('bk_attachments')->insert([
+                            'attachment_id' => $attachment_id,
+                            'attachment_type' => $attachment_type,
+                            'attachment_loc' => $path,
+                            'name' => $attachment_id.'-'.$name
+                    ]);
+                    $getData =  DB::table('bk_attachments')->where('attachment_id', $attachment_id)->get();
+                    return response()->json(["msg"=>'The File has been Uploaded Successful '.$name, "color"=> 'success', 'data'=>  $getData]);
+                }else{
+                    return response()->json(["msg"=>'The File Already Exist '.$name, "color"=> 'warning']);
+                }
+            }
+            }
+         $checkData = BkRequest::where('requestid', $req->requestid)->pluck('requestid')->first();
+        //CUSTOMER
+        try{
+                $CustomerDATA = BkCustomerInfo::find($customerid);
+                $CustomerDATA->firstname = ucfirst(@$req->firstname);
+                $CustomerDATA->lastname  = ucfirst(@$req->lastname);
+                $CustomerDATA->middlename  = ucfirst(@$req->middlename);
+                $CustomerDATA->barangay  = @$req->barangay;
+                $CustomerDATA->region_id  =  $this->regionMap($req->region)['id'];
+                $CustomerDATA->region_name  = $this->regionMap($req->region)['name'];
+                $CustomerDATA->contactperson = @$req->contactperson? @$req->contactperson : 'N/A';
+                $CustomerDATA->cpnumber = @$req->cpnumber;
+                $CustomerDATA->emailaddress = @$req->emailaddress?@$req->emailaddress : 'N/A';
+                $CustomerDATA->houseno = @$req->houseno?@$req->houseno : 'N/A';
+                $CustomerDATA->mcity = @$req->mcity? @$req->mcity : 'N/A';
+                $CustomerDATA->organization = @$req->organization? @$req->organization : 'N/A';
+                $CustomerDATA->province = @$req->province? @$req->province : 'N/A';
+                $CustomerDATA->specialinstruction = @$req->specialinstruction? @$req->specialinstruction : 'N/A';
+                $CustomerDATA->street = @$req->street?@$req->street : 'N/A';
+                $CustomerDATA->telephoneno = @$req->telephoneno?@$req->telephoneno : 'N/A';
+                $CustomerDATA->update();
+           
+                if(@$req->file("attachment")){
+                // $path = Storage::putFile('BookingSystemAttachments',$req->file("attachment"));
+                // $name = $req->file("attachment")->getClientOriginalName();
+                $path = Storage::disk('appletronics')->putFile('/', $req->file('attachment'));
+                $name = $req->file("attachment")->getClientOriginalName();
+                }else{
+                $path = $req->attachment;
+                $name = $req->attachmentN;
+                }
+                //REQUEST
+                $RequestDATA = BkRequest::find($getID->id);
+                $RequestDATA->reason = '';
+                $RequestDATA->filename = $name;
+                $RequestDATA->requestid = @$req->requestid;
+                $RequestDATA->requesttype = @$req->requestType;
+                $RequestDATA->customerid = @$CustomerDATA->id;
+                $RequestDATA->landmark = @$req->landmark;
+                $RequestDATA->bookby = @$req->bookby;
+                // @$req->identify == 1? 0 : 5
+                $RequestDATA->status = @$req->identify == 1? 0 : 5;
+                $RequestDATA->identify = @$req->requestType.'/'.@\Auth::user()->branch_id.'/'.@\Auth::user()->id;
+                $RequestDATA->branch = @\Auth::user()->branch_id;
+                $RequestDATA->userid = @\Auth::user()->id;
+                $RequestDATA->unitid = @md5($req->requestid); 
+                $RequestDATA->attachment = @$path;
+                //LOCATION UNIT  
+                $RequestDATA->locandorg = @$req->locanorg? @$req->locanorg :'N/A';
+                // AND NAME OF ORGANIZATION
+                $RequestDATA->organizationname = @$req->orgname? @$req->orgname : 'N/A' ;
+                //SURVEY LOCATION
+                $RequestDATA->surveyloc = @$req->surveylocation? @$req->surveylocation : 'N/A';
+                $RequestDATA->additionalrequest1 = @$req->additionalrequest1;
+                $RequestDATA->additionalrequest2 = @$req->additionalrequest2;
+                $RequestDATA->specialinstruction = @$req->specialinstruction;
+                $RequestDATA->ifseries = 1;
+                $RequestDATA->update();
+                $branchid = \Auth::user()->branch_id;
+                $branch = DB::table("branches")->where("id", $branchid)->pluck("sapcode")->first();
+                //GET STARTING SERIES AT BRANCH
+                $getstarting = DB::table("branches")->where("id", $branchid)->pluck("seriesno")->first();
+                $ticketno = substr($branch,0,4).'-'.sprintf("%06s",$getstarting+1);
+        
+                //UPDATE SERIES AT BRANCH TO USED NEXT SERIES IF INPUT ANOTHER ONE
+                DB::table("branches")->where("id", $branchid)->update([
+                    "seriesno" => sprintf("%06s",$getstarting+1)
+                ]);
+                DB::table("bk_requests")->where("id", $RequestDATA->id)->update([
+                    "ticketno" => $ticketno
+                ]);
+                foreach(json_decode($req->units) as $data) {
+                
+                    $units = BkUnits::find($unitID);
+                    $units->unitid = md5($req->requestid);
+                    $units->appliancetype = @$data->appliancetype;
+                    $units->area = @$data->area;
+                    $units->brand = @$data->brand;
+                    $units->datepurchase = @$data->datepurchase;
+                    $units->deliverydate = @$data->deliverydate;
+                    $units->demandreplacement = @$data->demandreplacement;
+                    $units->level = @$data->level;
+                    $units->location = @$data->location;
+                    $units->propertytype = @$data->propertytype;
+                    //INSTALLATION ADDRESS
+                    $units->locationofinstallation = $data->locationofinstallation === 0 ?@$req->barangay.','.@$req->mcity.','.@$req->province:  $data->locationofinstallation;
+                    $units->model = @$data->model;
+                    $units->paidamoun = @$data->paidamoun;
+                    $units->priority = @$data->priority;
+                    $units->prodcategories = @$data->prodcategories;
+                    $units->ornumber = @$data->ornumber;
+                    $units->qty = @$data->qty;
+                    $units->problem = @$data->problem;
+                    $units->serialno = @$data->serialno;
+                    $units->time  = @$data->time->HH.':'.@$data->time->mm;
+                    $units->unitcondition = @$data->unitcondition;
+                    $units->wallfinish = @$data->wallfinish;
+                    $units->warrantycondition = @$data->warrantycondition;
+                    $units->withpowersupply = @$data->withpowersupply;
+                    $units->update();
+                   
+                   
+                        if($req->file("file")){
+                            attachment($RequestDATA->id, 0, @$req);
+                        }
+                     
+                $this->history(1,$req);
+                if($req->restoreid){
+                    $this->close($req->restoreid);
+                }
+                $bname = DB::table("branches")->where("id", $branchid)->pluck("name")->first();
+                return response()->json(['branch'=>$bname,'ref'=>$ticketno, 'iden'=>  @$req->identify == 1? 0:5, 'msg' => 'Success']);
+            } 
+                return response()->json(['ref'=> '', 'iden'=> 1,'msg' => 'File Exist']);
+                    }catch(\Exception $e){
+                        return response()->json($e);
+                    }
+    }
+    
+
+    public function CallIdTracking(request $req){
+        
+      
+           if($req->identify == 1){
+            
+                return BkRequest::with(['customer'=> function($q){
+                    $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+                     }])
+                    ->with('attachfiles')
+                    ->with("user")
+                    ->with("branch")
+                    ->with("units")
+                    ->with("BkJobsUpdate")->where('callid', $req->callid)
+                    ->get();
+           }else{
+            
+               return DB::connection("sqlsrv3")
+                    ->table("OCLG")
+                    ->leftjoin('OUSR', 'OCLG.AssignedBy', '=', 'OUSR.USERID')
+                    ->where('parentId',  $req->callid)
+                    ->select('CntctDate as time', 'Notes as message', 'OUSR.U_NAME as from')
+                    ->get();
+           }
+           
+            
+    }
+    public function technicianjob(){
+ 
+         function getInstaller(){
+            if(\Auth::user()->branch_id == 5){
+               return  DB::table('bk_requests')->whereNotNull('installer')->whereYear('created_at', date("Y"))->select('installer', 'branch')->get();
+            }else{
+                $branchid = \Auth::user()->branch_id;
+                return DB::table('bk_requests')->where('branch', $branchid)->whereNotNull('installer')->whereYear('created_at', date("Y"))->select('installer', 'branch')->get();
+            }
+            
+         }
+         function getbranch($id){
+            return DB::table('branches')->where('id', $id)->pluck('name')->first();
+        }
+         
+        foreach( getInstaller() as $in){
+            $ins[] = $in->installer;
+        }
+        
+        $reason = ['Cancelled','Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
+        $data = BkRequest::with(['customer'=> function($q){
+            $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+        }])
+         
+        ->with("BkJobsUpdate")
+        ->orderby("created_at","DESC")
+        ->whereIn('installer', array_unique($ins))
+       // ->whereDate('installationdate', '>=', Carbon::now()->addDay()->toDateString())
+        ->whereNotIn('reason',  $reason)->get();
+        
+        foreach($data as $schedule){
+            if($schedule['installationdate']){
+                $organizer[] = ['color'=> 'green', 'end'=> '', 'name'=>  $schedule['installer'].'/'. getbranch($schedule['branch']), 'start'=> $schedule['installationdate'], 'timed'=>true, 'id'=>$schedule['id'], 'br'=> getbranch($schedule['branch']), 'installer'=> $schedule['installer']];
+            }
+          
+        }
+        return $organizer;
     }
 
 

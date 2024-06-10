@@ -16,10 +16,14 @@ class Booking
     public function handle($request, Closure $next)
     {
         
-       if ($request->is('api/booking/jobs')|| $request->is('api/booking/store')
+       if ($request->is('api/booking/jobs')
+        || $request->is('api/booking/store')
+        || $request->is('api/booking/storetest')
+        || $request->is('api/booking/rebookrequest')
         ||  $request->is('api/booking/scalate/index')
         ||  $request->is('api/booking/scalate/create')
-        ||  $request->is('api/booking/scalate/threads') ) {
+        ||  $request->is('api/booking/scalate/threads')
+        ||  $request->is('api/booking/appletronics/tracking') ) {
         if (\Auth::user()->hasRole(['Booking Admin User',
                                     'Booking Super User',
                                     'Booking Branch User'
@@ -83,7 +87,7 @@ class Booking
         } 
         //MORE ACCESS
         if ($request->is('api/booking/jobs/salesinvoice/download') || 
-            $request->is('api/booking/jobs/checkrecords') || $request->is('api/booking/jobs/counts') ) {
+            $request->is('api/booking/jobs/checkrecords')||$request->is('api/booking/jobs/additional/download') || $request->is('api/booking/jobs/counts') || $request->is('api/booking/jobs/additional/upload') ) {
             if (\Auth::user()->hasPermissionTo('Api Control')) {
                 return $next($request);
             } else {
@@ -98,7 +102,22 @@ class Booking
             } else {
                 abort('403');
             }
-    
+        } 
+        //REBOOK ACCESS
+        if ($request->is('api/booking/jobs/rebookrequest')) {
+            if (\Auth::user()->hasPermissionTo('Rebook Request')) {
+                return $next($request);
+            } else {
+                abort('403');
+            }
+        } 
+        //Cancelled ACCESS
+        if ($request->is('api/booking/jobs/cancelled')) {
+            if (\Auth::user()->hasPermissionTo('Cancelled Request')) {
+                return $next($request);
+            } else {
+                abort('403');
+            }
         } 
     }
 }

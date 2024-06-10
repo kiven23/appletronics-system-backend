@@ -351,16 +351,21 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
 	Route::post('/restore', 'BkRequestController@restore')->name('app.booking.system.restore');
 	Route::post('/restore/close', 'BkRequestController@close')->name('app.booking.system.restore.close');
 	Route::post('/store', 'BkRequestController@store')->name('app.booking.system.store');
-	
+	Route::post('/storetest', 'BkRequestController@storetest')->name('app.booking.system.storetest');
+	Route::post('/rebookrequest', 'BkRequestController@rebookrequest')->name('app.booking.system.rebookrequest');
 	Route::post('/jobs/checkrecords', 'BkRequestController@checkrecords')->name('app.booking.system.jobs/checkrecords');
     Route::post('/jobs/salesinvoice/download', 'BkRequestController@downloadsales')->name('app.booking.system.downloadsales');
-	
+	Route::post('/jobs/additional/download', 'BkRequestController@additional')->name('app.booking.system.additional');
+	Route::post('/jobs/additional/upload', 'BkRequestController@uploadadditional')->name('app.booking.upload.additional');
+
 	Route::get('/jobs', 'BkRequestController@jobs')->name('app.booking.system.jobs');
 	Route::get('/jobs/counts', 'BkRequestController@count')->name('app.booking.system.jobs.counts');
 
 	//ADMIN ONLY ACCESS
 	//ACTIONS
 	Route::post('/jobs/action', 'BkRequestController@action')->name('app.booking.system.action');
+	Route::post('/jobs/rebookrequest', 'BkRequestController@action')->name('app.booking.system.rebookrequest');
+	Route::post('/jobs/cancelled', 'BkRequestController@action')->name('app.booking.system.cancelledrequest');
 	//TRASH
 	Route::post('/jobs/trash', 'BkRequestController@trash')->name('app.booking.system.trash');
 
@@ -375,40 +380,37 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
 	Route::post('/jobs/jobsupdate', 'BkJobsUpdateController@jobsupdate')->name('app.booking.system.jobs.update');
 	//Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->name('app.booking.system.jobs.calendarschedule');
     Route::post('/jobs/updateserial', 'BkJobsUpdateController@updateserial')->name('app.booking.system.jobs.update');
-
+    //TRACKING
+	Route::get('/appletronics/tracking', 'BkRequestController@CallIdTracking'); 
 });
 Route::get('/notification', 'BkScalateController@notification')->name('app.booking.system.jobs.scalate.notify');
 Route::get('/scalate/count', 'BkScalateController@scalatecout')->name('app.scalatecount');
 Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->name('app.booking.system.jobs.calendarschedule');
+Route::get('/jobs/tech/schedules/calendar', 'BkRequestController@technicianjob')->name('app.booking.system.jobs.technicianjob');
 Route::get('/jobs/customers/list', 'BkScalateController@customerList')->name('app.booking.system.jobs.customerList');
 Route::get('/random/exec', 'BkRequestController@exec')->name('app.scalatecount.exec');
-
+Route::get('/fetch/getrequest', 'BkRequestController@rebook')->name('app.rebook.exec');
 Route::get('/fetch/fields/units', 'BkRequestController@unitfields')->name('app.fields.unitfields');
 Route::get('/fetch/fields', 'BkRequestController@fields')->name('app.fields.exec');
 Route::post('/create/fields', 'BkRequestController@createFields')->name('app.fields.create');
 Route::post('/delete/fields', 'BkRequestController@deleteFields')->name('app.fields.delete');
 Route::post('/createitem/fields', 'BkRequestController@createitem')->name('app.fields.createitem');
 Route::post('/deleteitems/fields', 'BkRequestController@deleteitems')->name('app.fields.deleteitems');
- 
 Route::get('/random/exec2', 'BkRequestController@syncSapBookingSched')->name('app.test.exec');
- 
 Route::get('/random/execute', 'BkRequestController@execute')->name('app.execute.exec');
-
 Route::get('/database/sync', 'BkRequestController@testDb')->name('app.exec.exec');
 Route::get('/notification/test', 'BkRequestController@notify');
-
 Route::post('/seen/nofication', 'BkScalateController@seen');
 Route::get('/testing/api', 'BkRequestController@regionMap');
-
-
 Route::get('/testing/sapapi', 'BkRequestController@dbug');
-
 //PRINT REQUEST FORM
 Route::get('/appletronics/reports/requestform', 'BkRequestController@print');
-Route::post('/testing/uploadtest', 'BkRequestController@uploadtest')->name('app.uploadtest.uploadtest');
-
+Route::get('/appletronics/test', 'BkRequestController@CallIdTracking'); 
 ///APPLETRONICS TECHNICIAN
 Route::group(['prefix' => '/technician' ], function () {
 	Route::get('/myjobs', 'BkTechnicianController@myjob')->name('app.tech.system.myjobs');
 	Route::post('/myjobs/insert', 'BkTechnicianController@insert')->name('app.tech.system.myjobs.insert');
+	Route::get('/myjobs/calendar', 'BkTechnicianController@calendar')->name('app.tech.system.myjobs.calendar');
+	Route::get('/myjobs/admin/queue', 'BkTechnicianController@adminQueue')->name('app.tech.system.myjobs.adminQueue');
 });
+ 

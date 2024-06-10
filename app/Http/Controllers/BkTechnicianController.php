@@ -54,7 +54,7 @@ class BkTechnicianController extends Controller
             }) 
             // SCHEDULE NEXT DAY UNASSIGNED
             ->when($i == 0, function ($query) use ($e, $n) {
-                    return $query->whereDate('installationdate', '>=', $e)->whereNotIn('reason' , $n);   
+                    return $query->whereNotIn('reason' , $n);   
             })
             ->when($i == 2, function ($query) use ($e, $n) {
                 return $query->whereIn('reason' , $n);   
@@ -62,8 +62,8 @@ class BkTechnicianController extends Controller
             ->when($i == 3, function ($query) use ($e, $n) {
                 return $query->whereIn('reason' , $n);   
             })
-            ->when($i == 4, function ($query) use ($e) {
-                return $query->whereDate('installationdate', $e);
+            ->when($i == 4, function ($query) use ($e, $n) {
+                return $query->whereDate('installationdate', $e)->whereNotIn('reason' , $n);
             }) 
             ->when($i == 5, function ($query) use ($e, $n) {
                 return $query->whereDate('installationdate', $e)->whereNotIn('reason' , $n)->where('requesttype', 'REPAIR');
@@ -111,7 +111,7 @@ class BkTechnicianController extends Controller
         }
            
        //UNASSIGNED DATE NEXT DAY
-        $data['unassigned'] = count(check(Carbon::now()->addDay()->toDateString(), 0, listing(0)));
+        $data['unassigned'] = count(check(0, 0, listing(0)));
        //PENDING DATE NOW
         $data['pending'] =  count(check(Carbon::now()->toDateString(),1, listing(1)));
        //COMPLETED
@@ -119,7 +119,7 @@ class BkTechnicianController extends Controller
        //CANCELLED
         $data['cancelled'] =  count(check(Carbon::now()->toDateString(),3, listing(3)));
        //TOTAL JOBS 
-        $data['totaljobs'] = ['asof'=> Carbon::now()->format('M d, Y'), 'count'=> count(check(Carbon::now()->toDateString(),4, ''))];
+        $data['totaljobs'] = ['asof'=> Carbon::now()->format('M d, Y'), 'count'=> count(check(Carbon::now()->toDateString(),4, listing(1)))];
        //TECHNICIAN LIST
         $data['technician'] = technician();
         $data['dashboard']= ["service"=> count(check(Carbon::now()->toDateString(),5, listing(1))),
@@ -142,6 +142,29 @@ class BkTechnicianController extends Controller
         return $all;
     }
     public function dashboard(){
+
+    }
+    public function calendar(){
+        
+        $reason = ['Cancelled','Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
+        $data = BkRequest::with(['customer'=> function($q){
+            $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+        }])
+         
+        ->with("BkJobsUpdate")
+        ->orderby("created_at","DESC")
+       ->where('installer', 'LAGUNA, FERNANDO')
+       // ->whereDate('installationdate', '>=', Carbon::now()->addDay()->toDateString())
+        ->whereNotIn('reason',  $reason)->get();
+        
+        foreach($data as $schedule){
+            if($schedule['installationdate']){
+                $organizer[] = ['color'=> 'green', 'end'=> '', 'name'=>  '#'.$schedule['callid'], 'start'=> $schedule['installationdate'], 'timed'=>true, 'id'=>$schedule['id']];
+            }
+          
+        }
+        return $organizer;
+
 
     }
     public function insert(request $req){
@@ -168,6 +191,9 @@ class BkTechnicianController extends Controller
        return $M;
         
         
+    }
+    public function adminQueue(){
+        return DB::table('bk_technicians')->where('status', 0)->get();
     }
     
     

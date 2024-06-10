@@ -68,6 +68,11 @@ return [
             'driver' => 'local',
             'root' => '/media/webportal/backup/appletronicsData/bookingsystem/attachment',
         ],
+        // Add a new folder
+        'appletronics2' => [
+            'driver' => 'local',
+            'root' => '/media/webportal/backup/appletronicsData/bookingsystem/attachment/BookingSystemAttachments',
+        ],
 
     ],
 

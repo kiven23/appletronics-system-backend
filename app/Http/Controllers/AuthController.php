@@ -584,7 +584,11 @@ class AuthController extends Controller
           ]
         ];
      }
- 
+      $techjob = [
+        'text' => 'Technicians Job',
+        'icon' => 'mdi-book',
+        'route' => '/app/booking/techjob',
+      ];
       $book = [
         'text' => 'Booking',
         'icon' => 'mdi-book',
@@ -599,6 +603,11 @@ class AuthController extends Controller
         'text' => 'Jobs',
         'icon' => 'mdi-clipboard-check',
         'route' => '/app/booking/jobs',
+      ];
+      $tracking = [
+        'text' => 'Tracking',
+        'icon' => 'mdi-clipboard-outline',
+        'route' => '/app/booking/tracking',
       ];
       if (\Auth::user()->hasRole(['Technician Permission'])) {
         $Technician = [
@@ -662,7 +671,7 @@ class AuthController extends Controller
            
         ];
       }
-    array_push($permission, @$home, @$Administrative, @$book, @$scalate, @$jobs, @$Technician);
+    array_push($permission, @$home,@$techjob, @$Administrative, @$book, @$scalate, @$tracking,@$jobs, @$Technician);
 
     return array_filter($permission);
   }
