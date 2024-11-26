@@ -18,6 +18,7 @@ class Booking
         
        if ($request->is('api/booking/jobs')
         || $request->is('api/booking/store')
+        || $request->is('api/booking/quest/customer/store')
         || $request->is('api/booking/storetest')
         || $request->is('api/booking/rebookrequest')
         ||  $request->is('api/booking/scalate/index')
@@ -26,7 +27,8 @@ class Booking
         ||  $request->is('api/booking/appletronics/tracking') ) {
         if (\Auth::user()->hasRole(['Booking Admin User',
                                     'Booking Super User',
-                                    'Booking Branch User'
+                                    'Booking Branch User',
+                                    'Booking Promodizer User'
                                      ])) {
             return $next($request);
         } else {

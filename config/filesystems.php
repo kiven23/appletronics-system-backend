@@ -66,7 +66,7 @@ return [
         // Add a new disk
         'appletronics' => [
             'driver' => 'local',
-            'root' => '/media/webportal/backup/appletronicsData/bookingsystem/attachment',
+            'root' => '/media/webportal/backup1/appletronicsData/bookingsystem/attachment',
         ],
         // Add a new folder
         'appletronics2' => [

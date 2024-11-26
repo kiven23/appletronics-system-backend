@@ -360,7 +360,7 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
 
 	Route::get('/jobs', 'BkRequestController@jobs')->name('app.booking.system.jobs');
 	Route::get('/jobs/counts', 'BkRequestController@count')->name('app.booking.system.jobs.counts');
-
+    Route::post('/quest/customer/store', 'BkRequestController@customerbook')->name('app.booking.system.customerbook');
 	//ADMIN ONLY ACCESS
 	//ACTIONS
 	Route::post('/jobs/action', 'BkRequestController@action')->name('app.booking.system.action');
@@ -383,6 +383,8 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
     //TRACKING
 	Route::get('/appletronics/tracking', 'BkRequestController@CallIdTracking'); 
 });
+Route::post('/guest/customer/verify', 'BkRequestController@phoneuserverify')->name('app.booking.system.phoneuserverify');
+
 Route::get('/notification', 'BkScalateController@notification')->name('app.booking.system.jobs.scalate.notify');
 Route::get('/scalate/count', 'BkScalateController@scalatecout')->name('app.scalatecount');
 Route::get('/jobs/schedules/calendar', 'BkRequestController@calendarschedule')->name('app.booking.system.jobs.calendarschedule');

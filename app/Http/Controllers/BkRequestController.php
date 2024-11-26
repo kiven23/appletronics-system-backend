@@ -298,6 +298,12 @@ class BkRequestController extends Controller
                 if(\Auth::user()->hasRole(['AREA4'])){
                     $region = 11;
                 }
+                if(\Auth::user()->hasRole(['AREA5'])){
+                    $region = 13;
+                }
+                if(\Auth::user()->hasRole(['AREA6'])){
+                    $region = 14;
+                }
                 if(\Auth::user()->hasRole(['AREASALL'])){
                     $region = 4;
                 }
@@ -356,6 +362,7 @@ class BkRequestController extends Controller
     }
     public function count(){
         if(\Auth::user()->Branch->id== 5){
+            
             //CALLIN1
             if(\Auth::user()->hasRole(['AREA1'])){
                 $region = 8;
@@ -371,6 +378,12 @@ class BkRequestController extends Controller
             //CALLIN4
             if(\Auth::user()->hasRole(['AREA4'])){
                 $region = 11;
+            }
+            if(\Auth::user()->hasRole(['AREA5'])){
+                $region = 13;
+            }
+            if(\Auth::user()->hasRole(['AREA6'])){
+                $region = 14;
             }
             if(\Auth::user()->hasRole(['AREASALL'])){
                 $region = 4;
@@ -437,8 +450,8 @@ class BkRequestController extends Controller
         }else{
             $completed = ['Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
             $UNSIGM = DB::table("bk_requests")->where("status", 0)->where("branch", \Auth::user()->Branch->id)->get();
-            $ACCEPTED = DB::table("bk_requests")->where("status", 1)->where("branch", \Auth::user()->Branch->id)->whereIn('reason' , $completed)->get();
-            $COMPLETED = DB::table("bk_requests")->where("status", 1)->where("branch", \Auth::user()->Branch->id)->whereNotIn('reason' , $completed)->get();
+            $COMPLETED = DB::table("bk_requests")->where("status", 1)->where("branch", \Auth::user()->Branch->id)->whereIn('reason' , $completed)->get();
+            $ACCEPTED = DB::table("bk_requests")->where("status", 1)->where("branch", \Auth::user()->Branch->id)->whereNotIn('reason' , $completed)->get();
             $ASC = DB::table("bk_requests")->where("status", 2)->where("branch", \Auth::user()->Branch->id)->get();
             $REJECTED = DB::table("bk_requests")->where("status", 10)->where("branch", \Auth::user()->Branch->id)->get();
             $HOLD = DB::table("bk_requests")->where("status", 4)->where("branch", \Auth::user()->Branch->id)->get();
@@ -500,11 +513,17 @@ class BkRequestController extends Controller
                 ->pluck("attachment")
                 ->first();
         
-             
-            $fallbackPath = '/media/webportal/backup/appletronicsData/bookingsystem';
+            try {
+            $fallbackPath = '/media/webportal/backup1/appletronicsData/bookingsystem/attachment';
             $file = $fallbackPath .'/'. $path;
           
             return response()->download($file);
+            }catch (\Exception $e) {
+                $fallbackPath = '/media/webportal/backup/appletronicsData/bookingsystem/attachment';
+                $file = $fallbackPath .'/'. $path;
+          
+            return response()->download($file);
+         }
         } catch (\Exception $e) {
            
             \Log::error("Error downloading file from initial path: " . $e->getMessage());
@@ -532,11 +551,20 @@ class BkRequestController extends Controller
                 $path = BkAttachment::where('id', $req->id)
                 ->pluck("attachment_loc")
                 ->first();
-                $fallbackPath = '/media/webportal/backup/appletronicsData/bookingsystem/attachment';
-                $file = $fallbackPath . '/' . $path;
-        
-                
-                return response()->download($file);
+                try{
+                    $fallbackPath = '/media/webportal/backup1/appletronicsData/bookingsystem/attachment';
+                    $file = $fallbackPath . '/' . $path;
+           
+                   
+                   return response()->download($file);
+                } catch (\Exception $e) {
+                    $fallbackPath = '/media/webportal/backup/appletronicsData/bookingsystem/attachment';
+                    $file = $fallbackPath . '/' . $path;
+           
+                   
+                   return response()->download($file);
+                }
+              
        
       
         
@@ -580,6 +608,12 @@ class BkRequestController extends Controller
         //CALLIN4
         if(\Auth::user()->hasRole(['AREA4'])){
             $region = 11;
+        }
+        if(\Auth::user()->hasRole(['AREA5'])){
+            $region = 13;
+        }
+        if(\Auth::user()->hasRole(['AREA6'])){
+            $region = 14;
         }
         if(\Auth::user()->hasRole(['AREASALL'])){
             $region = 4;
@@ -805,38 +839,42 @@ class BkRequestController extends Controller
                 )
                 //->latest("OSCL.U_SchedDate")
                 ->where("OSCL.callID", $callid)
-                ->orderBy("OCLG.ClgCode", "asc")
-                ->get()
-                ->last();
+                ->orderBy("OCLG.ClgCode", "desc")
+                //->get()
+                ->first();
             if($dd){
                 return $dd; 
             } 
         }
-        # NEW CODE =========================================
-        $completed = ['Cancelled','Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
-        $callID = DB::table("bk_requests")
-        ->whereNotNull("callid")
-        // ->where(function($query) use ($completed) {
-        //     $query->whereNotIn('reason', $completed)
-        //           ->orWhereNull('reason');
-        // })
-        ->where('status', 0)
-        ->select("callid")
-        ->get()
-        ->toArray();
-        //return $callID  =  DB::table("bk_requests")->whereNotNull("callid")->select("callid")->whereNotIn('reason' , $completed)->get()->toArray();
-        $sapData = array_filter(array_map(function($sData) {
-            return sapDataConnect($sData->callid);
-        }, $callID));
-       $db = array_filter($sapData);
+        $y = Carbon::now()->year;
+        $m = Carbon::now()->month; 
        
-        #END CODE =========================================
+        function requestData($y, $m){
+            
+            # NEW CODE =========================================
+            $completed = ['Cancelled','Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
+            $callid = DB::table("bk_requests")
+            ->whereNotNull("callid")
+            ->where(function($query) use ($completed) {
+                $query->whereNotIn('reason', $completed)
+                    ->orWhereNull('reason');
+            })
+            ->where('status', '!=',10)
+            ->whereYear('created_at', $y)
+            ->whereMonth('created_at', $m)
+            //->where('status', 0)
+            ->select("callid")
+            // ->where('callid', 'bq1k1015')
+            ->get()
+            ->toArray();
+            return $callid;
+        }
         function Times($schedule,$time){
             if($time && $schedule){
                 $add = \Carbon\Carbon::parse(sprintf("%04d", $time))->format('H:i:s');
                 // $sd =  new carbon($add);
                 // $customize =  $sd->addMinutes($index)->toTimeString();
-                 return  $schedule.' '.$add ;
+                return  $schedule.' '.$add ;
             }else{
                 if($schedule){
                     return $schedule;
@@ -861,89 +899,87 @@ class BkRequestController extends Controller
                 }
                 return $val;
         }
-         
-        // $sdd = [];
-        // $reset_index = 12;
-        // foreach ($db as $index => $up) {
-        //     if ($up->U_SchedDate) {
-        //         $createDate = date_create($up->U_SchedDate);
-        //         $schedule = date_format($createDate, "Y-m-d");
-        //     } else {
-        //         $schedule = NULL;
-        //     }
-        //     $dd[] = Times($schedule, $up->comTime, $index % 12); // use modulo 12 to get the index within the range 0-11
-        //     if (($index + 1) % $reset_index === 0) {
-        //         $reset_index += 12; // set the next reset index
-        //         $index = $reset_index - 1; // reset the index to the last value of the current sequence
-        //     }
-        // }
-        // return $dd;
- 
-        // $dd = [];
-        // $reset_index = 12;  
-     
-       foreach($db as $index=>$up){
-       
-        if($up->U_SchedDate){
-            $createDate = date_create($up->U_SchedDate);
-            $schedule = date_format($createDate, "Y-m-d");
-        }else{
-            
-            $schedule = NULL;
+        function syncing($call, $c){
+               
+                //return $callID  =  DB::table("bk_requests")->whereNotNull("callid")->select("callid")->whereNotIn('reason' , $completed)->get()->toArray();
+                $sapData = array_filter(array_map(function($sData) {
+                    return sapDataConnect($sData->callid);
+                }, $call));
+                $db = array_filter($sapData);
+                //return Response()->json($db);
+                #END CODE =========================================
+              
+
+                foreach($db as $index=>$up){
+
+                if($up->U_SchedDate){
+                    $createDate = date_create($up->U_SchedDate);
+                    $schedule = date_format($createDate, "Y-m-d");
+                }else{
+                    
+                    $schedule = NULL;
+                }
+
+                $technician = strtoupper($up->techL.', '.$up->techF);
+
+                #FORACCEPT
+                if($schedule && $technician && $up->Stat !== 'Closed07' ||  $up->Stat == 'Closed05' ||  $up->Stat == 'Closed06'||  $up->Stat == 'Pending48' ||  $up->Stat == 'Pending15'
+                ||  $up->Stat == 'Closed03' ||  $up->Stat == 'Closed08'){
+                    DB::table("bk_requests")->where("callid", $up->callID)->update([
+                            'installationdate' =>  Times($schedule, $up->comTime),
+                            'installer'=> $technician,
+                            'notes'=> $up->Notes,
+                            'status'=> 1, 
+                            'reason'=> $up->reason,
+                            'notify'=>  IdentifyNotify($up->callID)
+                ]) ; 
+                #FOR UNASSIGNED
+                }else{
+                    DB::table("bk_requests")->where("callid", $up->callID)->update([
+                        'installationdate' =>  Times($schedule, $up->comTime),
+                        'installer'=> $technician,
+                        'notes'=> $up->Notes,
+                        'status'=> 0,
+                        'reason'=> $up->reason,
+                        'notify'=>  IdentifyNotify($up->callID)
+                    ]) ;  
+                }
+                #FOR ASC DISPATCH
+                if($up->Stat == 'Pending05'){
+                    DB::table("bk_requests")->where("callid", $up->callID)->update([
+                        'installationdate' =>  Times($schedule, $up->comTime) ,
+                        'installer'=> $technician,
+                        'notes'=> $up->Notes,
+                        'status'=> 2,
+                        'reason'=> $up->reason,
+                        'notify'=>  IdentifyNotify($up->callID)
+                    ]) ;  
+                }
+                #FOR REJECTION
+                if($up->Stat == 'Closed07'){
+                    DB::table("bk_requests")->where("callid", $up->callID)->update([
+                        'installationdate' =>  Times($schedule, $up->comTime) ,
+                        'installer'=> $technician,
+                        'notes'=> $up->Notes,
+                        'status'=> 10,
+                        'reason'=> $up->reason,
+                        'notify'=>  IdentifyNotify($up->callID)
+                    ]) ;  
+                }
+                    // if (($index + 1) % $reset_index === 0) {
+                    //      $reset_index += 12; // set the next reset index
+                    //     $index = $reset_index - 1; // reset the index to the last value of the current sequence
+                    // }
+                }
+                echo "sync-month".'-'.$c;
+                return 'sync';
         }
-        
-        $technician = strtoupper($up->techL.', '.$up->techF);
- 
-        #FORACCEPT
-        if($schedule && $technician && $up->Stat !== 'Closed07' ||  $up->Stat == 'Closed05' ||  $up->Stat == 'Closed06' ||  $up->Stat == 'Pending15'
-        ||  $up->Stat == 'Closed03' ||  $up->Stat == 'Closed08'){
-              DB::table("bk_requests")->where("callid", $up->callID)->update([
-                      'installationdate' =>  Times($schedule, $up->comTime),
-                      'installer'=> $technician,
-                      'notes'=> $up->Notes,
-                      'status'=> 1, 
-                      'reason'=> $up->reason,
-                      'notify'=>  IdentifyNotify($up->callID)
-        ]) ; 
-        #FOR UNASSIGNED
-        }else{
-            DB::table("bk_requests")->where("callid", $up->callID)->update([
-                'installationdate' =>  Times($schedule, $up->comTime),
-                'installer'=> $technician,
-                'notes'=> $up->Notes,
-                'status'=> 0,
-                'reason'=> $up->reason,
-                'notify'=>  IdentifyNotify($up->callID)
-            ]) ;  
+        for ($i = 1; $i <= $m; $i++) {
+            $callID = requestData($y,$i);
+            syncing($callID, $i);
+          
         }
-        #FOR ASC DISPATCH
-        if($up->Stat == 'Pending05'){
-            DB::table("bk_requests")->where("callid", $up->callID)->update([
-                'installationdate' =>  Times($schedule, $up->comTime) ,
-                'installer'=> $technician,
-                'notes'=> $up->Notes,
-                'status'=> 2,
-                'reason'=> $up->reason,
-                'notify'=>  IdentifyNotify($up->callID)
-            ]) ;  
-        }
-        #FOR REJECTION
-        if($up->Stat == 'Closed07'){
-            DB::table("bk_requests")->where("callid", $up->callID)->update([
-                'installationdate' =>  Times($schedule, $up->comTime) ,
-                'installer'=> $technician,
-                'notes'=> $up->Notes,
-                'status'=> 10,
-                'reason'=> $up->reason,
-                'notify'=>  IdentifyNotify($up->callID)
-            ]) ;  
-        }
-            // if (($index + 1) % $reset_index === 0) {
-            //      $reset_index += 12; // set the next reset index
-            //     $index = $reset_index - 1; // reset the index to the last value of the current sequence
-            // }
-    }
-    return 'sync';
+        return 'Done..!';
            
     return calendar($db);
     }
@@ -1217,10 +1253,10 @@ class BkRequestController extends Controller
     public function testDb(){
 
  
-
+     
     // return  DB::connection("sqlsrv3")->table("UFD1")->where("TableID", "ASCL")->get();
     //return "Hold";
-    
+     
     return $this->syncSapBookingSched();
     return   DB::connection("sqlsrv3")->table("OSCL")
        ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
@@ -1246,7 +1282,7 @@ class BkRequestController extends Controller
       // ->latest("OSCL.U_SchedDate")
         //->take(10)
         //->where('OSCL.U_CallStatusReason','Pending05')
-       ->where("OSCL.callID", 187957 )
+       ->where("OSCL.callID", 137971 )
        // ->whereYear("OSCL.U_SchedDate", '2022')
        // ->whereMonth("OSCL.U_SchedDate", '>=','08')
        ->get();
@@ -1823,6 +1859,24 @@ class BkRequestController extends Controller
         return $organizer;
     }
 
+    public function customerbook(Request $req){
+        return @\Auth::user();
+
+    }
+    
+    public function phoneuserverify(Request $req){
+        $branchuser = DB::table('users')->where('branch_id', 22)->pluck('email')->first();
+        $authController = new AuthController();
+
+        
+        request()->merge([
+            'email' => $branchuser,
+            'password' => '123!@#',
+        ]);
+
+        // Call the login method and return its response
+        return $authController->login();
+    }
 
     
 }

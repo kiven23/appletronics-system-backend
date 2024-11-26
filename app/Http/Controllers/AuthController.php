@@ -584,31 +584,45 @@ class AuthController extends Controller
           ]
         ];
      }
-      $techjob = [
-        'text' => 'Technicians Job',
-        'icon' => 'mdi-book',
-        'route' => '/app/booking/techjob',
-      ];
+  
+   if (\Auth::user()->hasRole(['Booking Promodizer User','Booking Branch User','Booking Super User','AREA6','AREA5','AREA1','AREA2','AREA3','AREASALL','AREA4','Booking Super User','Technician Permission'])) {
       $book = [
         'text' => 'Booking',
         'icon' => 'mdi-book',
         'route' => '/app/booking/index',
       ];
+   }
+  
+    if (!\Auth::user()->hasRole(['Booking Promodizer User'])) {
+     if (\Auth::user()->hasRole(['Booking Branch User','Booking Super User','AREA6','AREA5','AREA1','AREA2','AREA3','AREASALL','AREA4','Booking Super User','Technician Permission'])) {
+      $techjob = [
+        'text' => 'Technicians Job',
+        'icon' => 'mdi-book',
+        'route' => '/app/booking/techjob',
+      ];
+   }
+   if (\Auth::user()->hasRole(['Booking Branch User','Booking Super User','AREA6','AREA5','AREA1','AREA2','AREA3','AREASALL','AREA4','Booking Super User','Technician Permission'])) {
       $scalate = [
         'text' => 'Escalate',
         'icon' => 'mdi-escalator',
         'route' => '/app/booking/scalate',
       ];
+   }
+   if (\Auth::user()->hasRole(['Booking Branch User','Booking Super User','AREA6','AREA5','AREA1','AREA2','AREA3','AREASALL','AREA4','Booking Super User','Technician Permission'])) {
       $jobs = [
         'text' => 'Jobs',
         'icon' => 'mdi-clipboard-check',
         'route' => '/app/booking/jobs',
       ];
+   }
+   if (\Auth::user()->hasRole(['Booking Branch User','Booking Super User','AREA6','AREA5','AREA1','AREA2','AREA3','AREASALL','AREA4','Booking Super User','Technician Permission'])) {
       $tracking = [
         'text' => 'Tracking',
         'icon' => 'mdi-clipboard-outline',
         'route' => '/app/booking/tracking',
       ];
+   }
+ }
       if (\Auth::user()->hasRole(['Technician Permission'])) {
         $Technician = [
           'text' => 'Technician',
@@ -671,7 +685,7 @@ class AuthController extends Controller
            
         ];
       }
-    array_push($permission, @$home,@$techjob, @$Administrative, @$book, @$scalate, @$tracking,@$jobs, @$Technician);
+    array_push($permission, !\Auth::user()->hasRole(['Booking Promodizer User'])?@$home:'',@$techjob, @$Administrative, @$book, @$scalate, @$tracking,@$jobs, @$Technician);
 
     return array_filter($permission);
   }
