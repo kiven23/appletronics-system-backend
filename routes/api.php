@@ -384,6 +384,7 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
 	Route::get('/appletronics/tracking', 'BkRequestController@CallIdTracking'); 
 });
 Route::post('/guest/customer/verify', 'BkRequestController@phoneuserverify')->name('app.booking.system.phoneuserverify');
+Route::post('/guest/customer/sendOtp', 'BkRequestController@sendOtp')->name('app.booking.system.sendOtp');
 
 Route::get('/notification', 'BkScalateController@notification')->name('app.booking.system.jobs.scalate.notify');
 Route::get('/scalate/count', 'BkScalateController@scalatecout')->name('app.scalatecount');

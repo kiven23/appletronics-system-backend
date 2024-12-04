@@ -12,6 +12,7 @@ use App\BkUnits;
 use App\BkCustomerInfo;
 use App\BkCustomerHistory;
 use App\BkAttachment;
+use App\SelfBooking;
 use hash;
 use GuzzleHttp\Client;
 use App\user;
@@ -264,6 +265,14 @@ class BkRequestController extends Controller
             return $req;
     }
     public function jobs(request $req){
+            if($req->key){
+               $number = DB::table('self_bookings')
+               ->where('id', $req->key)
+               ->pluck('phone')->first();
+            }else{
+                $number = '';
+            }
+             
             $i = 0;
             if(@$req->id){
                    if($req->id == 3){
@@ -338,9 +347,14 @@ class BkRequestController extends Controller
                     ->get();
             }else{
                 $completed = ['Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
-                $data = BkRequest::with(['customer'=> function($q){
-                    $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
-                  }])
+                $data = BkRequest::with(['customer'=> function($q)use($number){
+                    $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname")) ;
+                  }]) 
+                  ->when(!empty($number), function ($query) use ($number) {
+                    return $query->whereHas('customer', function ($q) use ($number) {
+                        $q->where('cpnumber', $number);
+                    });
+                })
                 ->with('attachfiles')
                 ->with("user")
                 ->with("branch")
@@ -353,6 +367,7 @@ class BkRequestController extends Controller
                 ->when($i == 6, function ($query)use($completed)  {
                     return $query->whereNotIn('reason' , $completed);   
                 })
+              
                 ->where("branch", \Auth::user()->Branch->id)
                 ->orderby("created_at","DESC")
                 ->get();
@@ -360,7 +375,19 @@ class BkRequestController extends Controller
             return $data;
    
     }
-    public function count(){
+    public function count(Request $req){
+        if($req->key){
+            $number = DB::table('self_bookings')
+            ->where('id', $req->key)
+            ->pluck('phone')->first();
+            $customerID = DB::table('bk_customer_infos')->where('cpnumber', 'like','%'.$number.'%' )->select('id')->get();
+            foreach($customerID as $c){
+                $data [] = $c->id;
+            }
+            
+         }else{
+            $data = [];
+         }
         if(\Auth::user()->Branch->id== 5){
             
             //CALLIN1
@@ -448,13 +475,52 @@ class BkRequestController extends Controller
                             "rejected"=>count($REJECTED)];
 
         }else{
+            
             $completed = ['Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
-            $UNSIGM = DB::table("bk_requests")->where("status", 0)->where("branch", \Auth::user()->Branch->id)->get();
-            $COMPLETED = DB::table("bk_requests")->where("status", 1)->where("branch", \Auth::user()->Branch->id)->whereIn('reason' , $completed)->get();
-            $ACCEPTED = DB::table("bk_requests")->where("status", 1)->where("branch", \Auth::user()->Branch->id)->whereNotIn('reason' , $completed)->get();
-            $ASC = DB::table("bk_requests")->where("status", 2)->where("branch", \Auth::user()->Branch->id)->get();
-            $REJECTED = DB::table("bk_requests")->where("status", 10)->where("branch", \Auth::user()->Branch->id)->get();
-            $HOLD = DB::table("bk_requests")->where("status", 4)->where("branch", \Auth::user()->Branch->id)->get();
+            $UNSIGM = DB::table("bk_requests")
+                ->where("status", 0)
+                ->where("branch", \Auth::user()->Branch->id)
+                ->when(!empty($data), function ($query) use ($data) {
+                    $query->whereIn('customerid', $data);
+                })
+                ->get();
+            $COMPLETED = DB::table("bk_requests")
+                ->where("status", 1)
+                ->where("branch", \Auth::user()->Branch->id)
+                ->whereIn('reason' , $completed)
+                ->when(!empty($data), function ($query) use ($data) {
+                    $query->whereIn('customerid', $data);
+                })
+                ->get();
+            $ACCEPTED = DB::table("bk_requests")
+                ->where("status", 1)
+                ->where("branch", \Auth::user()->Branch->id)
+                ->whereNotIn('reason' , $completed)
+                ->when(!empty($data), function ($query) use ($data) {
+                    $query->whereIn('customerid', $data);
+                })
+                ->get();
+            $ASC = DB::table("bk_requests")
+                ->where("status", 2)
+                ->where("branch", \Auth::user()->Branch->id)
+                ->when(!empty($data), function ($query) use ($data) {
+                    $query->whereIn('customerid', $data);
+                })
+                ->get();
+            $REJECTED = DB::table("bk_requests")
+                ->where("status", 10)
+                ->where("branch", \Auth::user()->Branch->id)
+                ->when(!empty($data), function ($query) use ($data) {
+                    $query->whereIn('customerid', $data);
+                })
+                ->get();    
+            $HOLD = DB::table("bk_requests")
+                ->where("status", 4)
+                ->where("branch", \Auth::user()->Branch->id)
+                ->when(!empty($data), function ($query) use ($data) {
+                    $query->whereIn('customerid', $data);
+                })
+                ->get();
 
             $ARRAYDATA = ["unsigned"=>count($UNSIGM),
                             "accepted"=> count($ACCEPTED),
@@ -1865,18 +1931,80 @@ class BkRequestController extends Controller
     }
     
     public function phoneuserverify(Request $req){
-        $branchuser = DB::table('users')->where('branch_id', 22)->pluck('email')->first();
-        $authController = new AuthController();
+        function Gentoken($auth){
+            $branchuser = DB::table('users')->where('branch_id', $auth)->pluck('email')->first();
+            $authController = new AuthController();
+            request()->merge([
+                'email' => $branchuser,
+                'password' => '123!@#',
+            ]);
+            return $authController->login();
+        }
+        function branchMap($b){
+            return DB::table('branches')->where('name', 'like', '%'.$b.'%')->pluck('id')->first();
+        }
+        $today = Carbon::now()->toDateString();
+        $check = DB::table('self_bookings')
+                 ->where('phone', $req->phone)
+                 ->where('ipaddress', $req->ipaddress)
+                 ->whereDate('created_at', $today)
+                 ->where('code', $req->otp)
+                 ->first();
+        if($check){
+             $branches = branchMap(base64_decode(base64_decode(base64_decode(base64_decode($check->token)))));
+             if($branches){
+                return ['token'=>Gentoken($branches),'data'=>$check];
+             }
+        }else{
+            return "Invalid";
+        }
+      
 
         
-        request()->merge([
-            'email' => $branchuser,
-            'password' => '123!@#',
-        ]);
-
-        // Call the login method and return its response
-        return $authController->login();
     }
 
+    public function sendOtp(Request $req){
+
+       $today = Carbon::now()->toDateString();
+       $check = DB::table('self_bookings')
+                ->where('phone', $req->phone)
+                ->where('ipaddress', $req->ipaddress)
+                ->whereDate('created_at', $today)
+                ->where('status', 0)
+                ->first();
+       
+        if($check){
+            if($check->count == 5){
+                return 1;
+            }
+            $new = SelfBooking::where('phone' , $req->phone)
+                  ->where('ipaddress', $req->ipaddress)
+                  ->first();
+        }else{
+        $new = new SelfBooking;
+        }
+        $otp = rand(100000, 999999);
+        $new->token = $req->token;
+        $new->branch =  $req->branch;
+        $new->ipaddress = $req->ipaddress;
+        $new->fullname = $req->name;
+        $new->phone = $req->phone;
+        $new->code = $otp;
+        $new->status = 0;
+        $new->exp = 5;
+    
+        if($check){
+            $new->count = $check->count + 1;
+            $new->update();
+            return "update";
+        }else{
+            $new->count = 1;
+            $new->save();
+            return "save";
+        }
+         
+        return $req;
+
+    }
     
 }
