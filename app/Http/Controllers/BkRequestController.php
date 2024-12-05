@@ -1943,6 +1943,16 @@ class BkRequestController extends Controller
         function branchMap($b){
             return DB::table('branches')->where('name', 'like', '%'.$b.'%')->pluck('id')->first();
         }
+        function Authtooth($check){
+            if($check){
+                $branches = branchMap(base64_decode(base64_decode(base64_decode(base64_decode($check->token)))));
+                if($branches){
+                   return ['token'=>Gentoken($branches),'data'=>$check];
+                }
+           }else{
+               return "Invalid OTP";
+           }
+        }
         $today = Carbon::now()->toDateString();
         $check = DB::table('self_bookings')
                  ->where('phone', $req->phone)
@@ -1951,13 +1961,19 @@ class BkRequestController extends Controller
                  ->where('code', $req->otp)
                  ->first();
         if($check){
-             $branches = branchMap(base64_decode(base64_decode(base64_decode(base64_decode($check->token)))));
-             if($branches){
-                return ['token'=>Gentoken($branches),'data'=>$check];
-             }
+            $exptime = Carbon::createFromFormat('Y-m-d H:i:s', $check->updated_at);
+            $currentTime = Carbon::now();
+            $time = 60 - $exptime->diffInSeconds($currentTime);
+            if($time < 0){
+                return "expired OTP";
+            }else{
+                return Authtooth($check);
+            } 
         }else{
-            return "Invalid";
+            return "OTP Not Found";
         }
+         
+        
       
 
         
