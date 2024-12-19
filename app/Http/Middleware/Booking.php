@@ -16,7 +16,8 @@ class Booking
     public function handle($request, Closure $next)
     {
         
-       if ($request->is('api/booking/jobs')
+       if ($request->is('api/booking/unassigned') 
+        || $request->is('api/booking/jobs')
         || $request->is('api/booking/store')
         || $request->is('api/booking/quest/customer/store')
         || $request->is('api/booking/storetest')

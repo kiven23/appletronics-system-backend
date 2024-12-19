@@ -347,6 +347,7 @@ Route::get('/queries/customers/account', 'SapApiController@queries');
 
 ///APPLETRONICS BOOKING
 Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], function () {
+	Route::get('/unassigned', 'BkRequestController@getunassigned')->name('app.booking.system.getunassigned');
 	//BRANCH ACCESS
 	Route::post('/restore', 'BkRequestController@restore')->name('app.booking.system.restore');
 	Route::post('/restore/close', 'BkRequestController@close')->name('app.booking.system.restore.close');
@@ -406,6 +407,9 @@ Route::get('/notification/test', 'BkRequestController@notify');
 Route::post('/seen/nofication', 'BkScalateController@seen');
 Route::get('/testing/api', 'BkRequestController@regionMap');
 Route::get('/testing/sapapi', 'BkRequestController@dbug');
+
+Route::get('/branch/gencode', 'BkRequestController@genCode');
+ 
 //PRINT REQUEST FORM
 Route::get('/appletronics/reports/requestform', 'BkRequestController@print');
 Route::get('/appletronics/test', 'BkRequestController@CallIdTracking'); 

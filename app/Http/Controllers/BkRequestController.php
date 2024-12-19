@@ -264,6 +264,144 @@ class BkRequestController extends Controller
     public function attachment(request $req){
             return $req;
     }
+    
+    public function getunassigned(request $req){
+        $threeDaysAgo = Carbon::now()->subDays(3);
+            if($req->key){
+               $number = DB::table('self_bookings')
+               ->where('id', $req->key)
+               ->pluck('phone')->first();
+            }else{
+                $number = '';
+            }
+             
+            $i = 0;
+            if(@$req->id){
+                   if($req->id == 3){
+                    $status = 10;
+                    $i = 3;
+                   }elseif($req->id == 1){
+                    $i = 5;
+                    $status = 0;
+                   }elseif($req->id == 2){
+                    
+                    $status = 10;
+                    $i = 2;
+                   }else{
+                    $status = @$req->id;
+                    $i = 6;
+                   }
+                     
+            }else{
+                    $status = 0;
+                    $i = 0;
+            }
+              
+            //$this->syncSapBookingSched();
+        
+            if(\Auth::user()->Branch->id == 5){
+                if(\Auth::user()->hasRole(['AREA1'])){
+                    $region = 8;
+                }
+                if(\Auth::user()->hasRole(['AREA2'])){
+                    $region = 9;
+                }
+                if(\Auth::user()->hasRole(['AREA3'])){
+                    $region = 10;
+                }
+                if(\Auth::user()->hasRole(['AREA4'])){
+                    $region = 11;
+                }
+                if(\Auth::user()->hasRole(['AREA5'])){
+                    $region = 13;
+                }
+                if(\Auth::user()->hasRole(['AREA6'])){
+                    $region = 14;
+                }
+                if(\Auth::user()->hasRole(['AREASALL'])){
+                    $region = 4;
+                }
+                $completed = ['Cancelled'];
+                $branches = DB::table("branches")
+                                ->where('region_id', $region)->pluck('id'); 
+
+                   $data = BkRequest::with(['customer'=> function($q){
+                    $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+                  }])
+                        ->with('attachfiles')
+                        ->with("user")
+                        ->with("branch")
+                        ->with("units")
+                        ->with("BkJobsUpdate")
+                        ->where(function ($query) use($branches, $region) { 
+                            if($region !== 4){
+                                for ($i = 0; $i < count($branches); $i++){
+                                    $query->orwhere('branch',   $branches[$i]);
+                                }}
+                        }
+                        )
+                        ->when($i == 3, function ($query)use($threeDaysAgo)  {
+                            return $query->whereNotNull('callid')
+                            ->where('updated_at', '>', $threeDaysAgo);   
+                        })
+                        ->when($i == 2, function ($query)use($threeDaysAgo)  {
+                            return $query->whereNotNull('callid')
+                            ->where('updated_at', '<', $threeDaysAgo);   
+                        })
+                 
+                 
+                        ->when($i == 0, function ($query)  {
+                            return $query->whereNull('callid');   
+                        })
+                        ->when($i == 5, function ($query)  {
+                            return $query->whereNotNull('callid');   
+                        })
+                        ->where("status",  $status)
+                        
+                        // ->when($i == 5, function ($query)use($completed)  {
+                        //     return $query->whereIn('reason' , $completed);   
+                        // })
+                        // ->when($i == 6, function ($query)use($completed)  {
+                        //     return $query->whereNotIn('reason' , $completed);   
+                        // })  
+                        ->orderby("created_at","DESC")
+                    ->get();
+            }else{
+                $completed = ['Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
+                $data = BkRequest::with(['customer'=> function($q)use($number){
+                    $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname")) ;
+                  }]) 
+                  ->when(!empty($number), function ($query) use ($number) {
+                    return $query->whereHas('customer', function ($q) use ($number) {
+                        $q->where('cpnumber', $number);
+                    });
+                })
+                ->with('attachfiles')
+                ->with("user")
+                ->with("branch")
+                ->with("units")
+                ->with("BkJobsUpdate")
+                ->when($i == 3, function ($query)  {
+                    return $query->whereNotNull('callid');   
+                })
+         
+                ->when($i == 0, function ($query)  {
+                    return $query->whereNull('callid');   
+                })
+                ->when($i == 5, function ($query)  {
+                    return $query->whereNotNull('callid');   
+                })
+                ->where("status", $status)
+                
+              
+                ->where("branch", \Auth::user()->Branch->id)
+                ->orderby("created_at","DESC")
+                ->get();
+            }
+            return $data;
+   
+  
+    }
     public function jobs(request $req){
             if($req->key){
                $number = DB::table('self_bookings')
@@ -708,19 +846,24 @@ class BkRequestController extends Controller
             }
            return $schedules;
         }
-        $branchName = \Auth::user()->branch->id;
+       $branchName = \Auth::user()->branch->id;
          
         if(\Auth::user()->Branch->id == 5){
             if($region == 4){
-                $data = BkRequest::with("customer")
+              
+         $data = BkRequest::with("customer")
                                 ->with("user")
                                 ->with("units")
-                                ->with("branch")
+                                 ->with("branch")
                                 ->with("BkJobsUpdate")
                                 ->where("status", 1)
                                 ->orWhere("status", 2)
                                 ->whereNotNull("installationdate")
+                                ->where('installationdate', '>=', Carbon::now() )
+                                ->orderby('installationdate', 'desc')
+                                ->take(3000)
                                 ->get();
+                 
                 
             }else{
                  
@@ -1904,18 +2047,16 @@ class BkRequestController extends Controller
         foreach( getInstaller() as $in){
             $ins[] = $in->installer;
         }
-        
+
         $reason = ['Cancelled','Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
         $data = BkRequest::with(['customer'=> function($q){
             $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
         }])
-         
         ->with("BkJobsUpdate")
         ->orderby("created_at","DESC")
         ->whereIn('installer', array_unique($ins))
        // ->whereDate('installationdate', '>=', Carbon::now()->addDay()->toDateString())
         ->whereNotIn('reason',  $reason)->get();
-        
         foreach($data as $schedule){
             if($schedule['installationdate']){
                 $organizer[] = ['color'=> 'green', 'end'=> '', 'name'=>  $schedule['installer'].'/'. getbranch($schedule['branch']), 'start'=> $schedule['installationdate'], 'timed'=>true, 'id'=>$schedule['id'], 'br'=> getbranch($schedule['branch']), 'installer'=> $schedule['installer']];
@@ -1926,16 +2067,16 @@ class BkRequestController extends Controller
     }
 
     public function customerbook(Request $req){
+        return $req->units;
         return @\Auth::user();
-
     }
     
     public function phoneuserverify(Request $req){
         function Gentoken($auth){
-            $branchuser = DB::table('users')->where('branch_id', $auth)->pluck('email')->first();
+            $branchuser = DB::table('users')->where('email', 'like', '%sales%')->where('branch_id', $auth)->pluck('email')->first();
             $authController = new AuthController();
             request()->merge([
-                'email' => $branchuser,
+                'email' =>  $branchuser,
                 'password' => '123!@#',
             ]);
             return $authController->login();
@@ -1960,6 +2101,7 @@ class BkRequestController extends Controller
                  ->whereDate('created_at', $today)
                  ->where('code', $req->otp)
                  ->first();
+        
         if($check){
             $exptime = Carbon::createFromFormat('Y-m-d H:i:s', $check->updated_at);
             $currentTime = Carbon::now();
@@ -1972,14 +2114,24 @@ class BkRequestController extends Controller
         }else{
             return "OTP Not Found";
         }
-         
-        
-      
-
-        
     }
-
+    
     public function sendOtp(Request $req){
+    //     function checkphone($number){
+    //         $check = DB::connection("sqlsrv3")->table("OCRD")->whereNotNull('Cellular')->select('Cellular')
+    //         ->whereRaw("REPLACE(REPLACE(REPLACE(Cellular, '-', ''), ' ', ''), '/', '') LIKE ?", ['%' . $number . '%'])
+    //         ->take(100)->get();
+    //         return count($check);
+    //     }
+      
+    //    if($req->phone){
+    //       $checkpoint = checkphone($req->phone);
+    //       if($checkpoint != 1){
+    //         return 2;
+    //       }
+    //    }
+             
+             
 
        $today = Carbon::now()->toDateString();
        $check = DB::table('self_bookings')
@@ -2021,6 +2173,39 @@ class BkRequestController extends Controller
          
         return $req;
 
+    }
+    public function genCode(){
+     
+        function Gentoken($auth){
+            $branchuser = DB::table('users')->where('first_name', 'Promodiser')->where('branch_id', $auth)->pluck('email')->first();
+            $authController = new AuthController();
+            request()->merge([
+                'email' =>  $branchuser,
+                'password' => '123!@#',
+            ]);
+            return $authController->login();
+        }
+        function genQrcode($link){
+            $key = "Akfpq0XtBu6nHoDMCWTg9ciQILe3JwmK";
+            return "https://www.qrcoder.co.uk/api/v4/?key=". $key."&text=" . urlencode($link);
+        }
+       $branch = DB::table('branches')->select('name','id')->get();
+
+        foreach($branch as $b){
+            if($b->name){
+                $d[] = ['qrcode'=> genQrcode('https://appletronics.com.ph:2031/verify?token='.base64_encode(base64_encode(base64_encode(base64_encode($b->name)))).'&key=SHhikA97phXxk4jCye9SPpPxr0gnJarPdFUtt779KSTANZg7DBMzHaDpvHUrgDz0ok4uBfoguOtQKJU1lerQ'),'code'=> 'https://appletronics.com.ph:2031/verify?token='.base64_encode(base64_encode(base64_encode(base64_encode($b->name)))).'&key=SHhikA97phXxk4jCye9SPpPxr0gnJarPdFUtt779KSTANZg7DBMzHaDpvHUrgDz0ok4uBfoguOtQKJU1lerQ', 'branch'=> $b->name ];
+                 
+                    // $f[] = ['error'=>  $b->name, 'in'=> Gentoken($b->id)];
+          
+            }
+        }
+        // foreach($f as $e){
+        //      $da = @$e['in']->original['access_token'];
+        //      if(!$da){
+        //         $s[] = ['branch'=> $e['error'], 'i'=> $e['in']->original['error']];
+        //      } 
+        //  }
+        return $d;
     }
     
 }
