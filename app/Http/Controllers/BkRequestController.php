@@ -264,9 +264,215 @@ class BkRequestController extends Controller
     public function attachment(request $req){
             return $req;
     }
-    
-    public function getunassigned(request $req){
+    public function countunassigned(request $req){
+        
         $threeDaysAgo = Carbon::now()->subDays(3);
+        if(\Auth::user()->Branch->id == 5){
+            if(\Auth::user()->hasRole(['AREA1'])){
+                $region = 8;
+            }
+            if(\Auth::user()->hasRole(['AREA2'])){
+                $region = 9;
+            }
+            if(\Auth::user()->hasRole(['AREA3'])){
+                $region = 10;
+            }
+            if(\Auth::user()->hasRole(['AREA4'])){
+                $region = 11;
+            }
+            if(\Auth::user()->hasRole(['AREA5'])){
+                $region = 13;
+            }
+            if(\Auth::user()->hasRole(['AREA6'])){
+                $region = 14;
+            }
+            if(\Auth::user()->hasRole(['AREASALL'])){
+                $region = 4;
+            }
+            $completed = ['Cancelled'];
+             
+            $branches = DB::table("branches")
+                                ->where('region_id', $region)->pluck('id'); 
+            $new = BkRequest::with(['customer'=> function($q){
+                $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+              }])
+                    ->with('attachfiles')
+                    ->with("user")
+                    ->with("branch")
+                    ->with("units")
+                    ->with("BkJobsUpdate")
+                    ->where(function ($query) use($branches, $region) { 
+                        if($region !== 4){
+                            for ($i = 0; $i < count($branches); $i++){
+                                $query->orwhere('branch',   $branches[$i]);
+                            }}
+                    })
+                    ->where("status",  0)
+                   ->whereNull('callid') 
+                     
+                    ->orderby("created_at","DESC")
+                    ->get();
+
+            $cannotbereach = BkRequest::with(['customer'=> function($q){
+                $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+                }])
+                    ->with('attachfiles')
+                    ->with("user")
+                    ->with("branch")
+                    ->with("units")
+                    ->with("BkJobsUpdate")
+                    ->where(function ($query) use($branches, $region) { 
+                        if($region !== 4){
+                            for ($i = 0; $i < count($branches); $i++){
+                                $query->orwhere('branch',   $branches[$i]);
+                            }}
+                    }
+                    )
+                    ->where("status",  0)
+                    ->whereNotNull('callid')
+                    ->where('updated_at', '>', $threeDaysAgo)
+                    ->whereNotNull('reason')
+                     
+                    ->orderby("created_at","DESC")
+                    ->get();
+
+            $customerrequest = BkRequest::with(['customer'=> function($q){
+                $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+                }])
+                    ->with('attachfiles')
+                    ->with("user")
+                    ->with("branch")
+                    ->with("units")
+                    ->with("BkJobsUpdate")
+                    ->where(function ($query) use($branches, $region) { 
+                        if($region !== 4){
+                            for ($i = 0; $i < count($branches); $i++){
+                                $query->orwhere('branch',   $branches[$i]);
+                            }}
+                    }
+                    )
+                    ->where("status",  0)
+                    ->whereNotNull('callid')
+                    ->whereNull('reason')
+                    ->orderby("created_at","DESC")
+                    ->get();
+
+            $forreject = BkRequest::with(['customer'=> function($q){
+                $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+                }])
+                    ->with('attachfiles')
+                    ->with("user")
+                    ->with("branch")
+                    ->with("units")
+                    ->with("BkJobsUpdate")
+                    ->where(function ($query) use($branches, $region) { 
+                        if($region !== 4){
+                            for ($i = 0; $i < count($branches); $i++){
+                                $query->orwhere('branch',   $branches[$i]);
+                            }}
+                    }
+                    )
+                    ->where("status",  0)
+                    ->whereNotNull('callid')
+                    ->where('updated_at', '<', $threeDaysAgo)
+                    ->whereNotNull('reason')
+                    ->orderby("created_at","DESC")
+                    ->get();
+            return ["new"=> count($new),
+                    "cannotbereach"=> count($cannotbereach),
+                    "customerreq"=> count($customerrequest),
+                    "forreject"=> count($forreject)];
+        }else{
+            
+            $new = BkRequest::with(['customer'=> function($q){
+                $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+              }])
+                    ->with('attachfiles')
+                    ->with("user")
+                    ->with("branch")
+                    ->with("units")
+                    ->with("BkJobsUpdate")
+                    ->where(function ($query){ 
+                        $query->orwhere('branch', \Auth::user()->Branch->id); 
+                    })
+                    ->whereNull('callid') 
+                    ->where("status",  0)
+                    ->orderby("created_at","DESC")
+                    ->get();
+
+            $cannotbereach = BkRequest::with(['customer'=> function($q){
+                $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+                }])
+                    ->with('attachfiles')
+                    ->with("user")
+                    ->with("branch")
+                    ->with("units")
+                    ->with("BkJobsUpdate")
+                    ->where(function ($query){ 
+                        $query->orwhere('branch', \Auth::user()->Branch->id); 
+                    })
+                  
+                    ->where("status",  0)
+
+                    ->whereNotNull('callid')
+                    ->where('updated_at', '>', $threeDaysAgo)
+                    ->whereNotNull('reason')
+                    ->orderby("created_at","DESC")
+                    ->get();
+
+            $customerrequest = BkRequest::with(['customer'=> function($q){
+                $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+                }])
+                    ->with('attachfiles')
+                    ->with("user")
+                    ->with("branch")
+                    ->with("units")
+                    ->with("BkJobsUpdate")
+                    ->where(function ($query){ 
+                        $query->orwhere('branch', \Auth::user()->Branch->id); 
+                    })
+                    ->where("status",  0)
+                    ->whereNotNull('callid')
+                    ->whereNull('reason')
+                    ->orderby("created_at","DESC")
+                    ->get();
+
+            $forreject = BkRequest::with(['customer'=> function($q){
+                $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+                }])
+                    ->with('attachfiles')
+                    ->with("user")
+                    ->with("branch")
+                    ->with("units")
+                    ->with("BkJobsUpdate")
+                    ->where(function ($query){ 
+                        $query->orwhere('branch', \Auth::user()->Branch->id); 
+                    })
+                    ->where("status",  0)
+
+                    ->whereNotNull('callid')
+                    ->where('updated_at', '<', $threeDaysAgo)
+                    ->whereNotNull('reason')
+                    ->orderby("created_at","DESC")
+                    ->get();
+
+            return ["new"=> count($new),
+                    "cannotbereach"=> count($cannotbereach),
+                    "customerreq"=> count($customerrequest),
+                    "forreject"=> count($forreject)];
+        }
+ 
+        return "";
+    }
+    public function unassignedApprover(request $req){
+        $update = BkRequest::find($req->data['id']);
+        $update->status = $req->data['status'];
+        $update->reason = $req->data['reasons'];
+        $update->update();
+        return 'ok';
+    }
+    public function getunassigned(request $req){
+            $threeDaysAgo = Carbon::now()->subDays(3);
             if($req->key){
                $number = DB::table('self_bookings')
                ->where('id', $req->key)
@@ -278,20 +484,18 @@ class BkRequestController extends Controller
             $i = 0;
             if(@$req->id){
                    if($req->id == 3){
-                    $status = 10;
+                    $status = 0;
                     $i = 3;
                    }elseif($req->id == 1){
                     $i = 5;
                     $status = 0;
                    }elseif($req->id == 2){
-                    
-                    $status = 10;
+                    $status = 0;
                     $i = 2;
                    }else{
                     $status = @$req->id;
                     $i = 6;
                    }
-                     
             }else{
                     $status = 0;
                     $i = 0;
@@ -342,28 +546,21 @@ class BkRequestController extends Controller
                         )
                         ->when($i == 3, function ($query)use($threeDaysAgo)  {
                             return $query->whereNotNull('callid')
-                            ->where('updated_at', '>', $threeDaysAgo);   
+                            ->where('updated_at', '>', $threeDaysAgo)
+                            ->whereNotNull('reason');
                         })
                         ->when($i == 2, function ($query)use($threeDaysAgo)  {
                             return $query->whereNotNull('callid')
-                            ->where('updated_at', '<', $threeDaysAgo);   
+                            ->where('updated_at', '<', $threeDaysAgo)
+                            ->whereNotNull('reason');
                         })
-                 
-                 
                         ->when($i == 0, function ($query)  {
                             return $query->whereNull('callid');   
                         })
                         ->when($i == 5, function ($query)  {
-                            return $query->whereNotNull('callid');   
+                            return $query->whereNotNull('callid')->whereNull('reason');   
                         })
                         ->where("status",  $status)
-                        
-                        // ->when($i == 5, function ($query)use($completed)  {
-                        //     return $query->whereIn('reason' , $completed);   
-                        // })
-                        // ->when($i == 6, function ($query)use($completed)  {
-                        //     return $query->whereNotIn('reason' , $completed);   
-                        // })  
                         ->orderby("created_at","DESC")
                     ->get();
             }else{
@@ -381,19 +578,23 @@ class BkRequestController extends Controller
                 ->with("branch")
                 ->with("units")
                 ->with("BkJobsUpdate")
-                ->when($i == 3, function ($query)  {
-                    return $query->whereNotNull('callid');   
+                ->when($i == 3, function ($query)use($threeDaysAgo)   {
+                    return $query->whereNotNull('callid')
+                    ->where('updated_at', '>', $threeDaysAgo)
+                    ->whereNotNull('reason');  
                 })
-         
+                ->when($i == 2, function ($query)use($threeDaysAgo)  {
+                    return $query->whereNotNull('callid')
+                    ->where('updated_at', '<', $threeDaysAgo)
+                    ->whereNotNull('reason');   
+                })
                 ->when($i == 0, function ($query)  {
                     return $query->whereNull('callid');   
                 })
                 ->when($i == 5, function ($query)  {
-                    return $query->whereNotNull('callid');   
+                    return $query->whereNotNull('callid')->whereNull('reason');   
                 })
                 ->where("status", $status)
-                
-              
                 ->where("branch", \Auth::user()->Branch->id)
                 ->orderby("created_at","DESC")
                 ->get();
@@ -458,31 +659,29 @@ class BkRequestController extends Controller
                 $branches = DB::table("branches")
                                 ->where('region_id', $region)->pluck('id'); 
 
-                   $data = BkRequest::with(['customer'=> function($q){
-                    $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
-                  }])
-                        ->with('attachfiles')
-                        ->with("user")
-                        ->with("branch")
-                        ->with("units")
-                        ->with("BkJobsUpdate")
-                        ->where(function ($query) use($branches, $region) { 
-                            if($region !== 4){
-                                for ($i = 0; $i < count($branches); $i++){
-                                    $query->orwhere('branch',   $branches[$i]);
-                                }}
-                        }
-                        )
-                        ->where("status",  $status)
-                        ->when($i == 5, function ($query)use($completed)  {
-                            return $query->whereIn('reason' , $completed);   
-                        })
-                        ->when($i == 6, function ($query)use($completed)  {
-                            return $query->whereNotIn('reason' , $completed);   
-                        })
-                         
-                        ->orderby("created_at","DESC")
-                    ->get();
+                $data = BkRequest::with(['customer'=> function($q){
+                $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
+                }])
+                ->with('attachfiles')
+                ->with("user")
+                ->with("branch")
+                ->with("units")
+                ->with("BkJobsUpdate")
+                ->where(function ($query) use($branches, $region) { 
+                    if($region !== 4){
+                        for ($i = 0; $i < count($branches); $i++){
+                            $query->orwhere('branch',   $branches[$i]);
+                        }}
+                })
+                ->where("status",  $status)
+                ->when($i == 5, function ($query)use($completed)  {
+                    return $query->whereIn('reason' , $completed);   
+                })
+                ->when($i == 6, function ($query)use($completed)  {
+                    return $query->whereNotIn('reason' , $completed);   
+                })
+                ->orderby("created_at","DESC")
+                ->get();
             }else{
                 $completed = ['Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
                 $data = BkRequest::with(['customer'=> function($q)use($number){
@@ -514,15 +713,20 @@ class BkRequestController extends Controller
    
     }
     public function count(Request $req){
+        
         if($req->key){
             $number = DB::table('self_bookings')
             ->where('id', $req->key)
             ->pluck('phone')->first();
-            $customerID = DB::table('bk_customer_infos')->where('cpnumber', 'like','%'.$number.'%' )->select('id')->get();
-            foreach($customerID as $c){
-                $data [] = $c->id;
+            if($number){
+                $customerID = DB::table('bk_customer_infos')->where('cpnumber', 'like','%'.$number.'%' )->select('id')->get();
+                foreach($customerID as $c){
+                    $data [] = @$c->id;
+                }
+                
+            }else{
+                $data = [];
             }
-            
          }else{
             $data = [];
          }
@@ -564,6 +768,7 @@ class BkRequestController extends Controller
                         $query->orwhere('branch',   $branches[$i]);
                     }}
             })
+           
             ->get();
 
             //pending
@@ -1057,9 +1262,10 @@ class BkRequestController extends Controller
         }
         $y = Carbon::now()->year;
         $m = Carbon::now()->month; 
-       
-        function requestData($y, $m){
-            
+        // $y = Carbon::now()->subYear()->year;  // Last year
+        // $m = Carbon::now()->subMonth()->month; // Last month
+
+        function requestData2($y, $m){
             # NEW CODE =========================================
             $completed = ['Cancelled','Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
             $callid = DB::table("bk_requests")
@@ -1071,9 +1277,30 @@ class BkRequestController extends Controller
             ->where('status', '!=',10)
             ->whereYear('created_at', $y)
             ->whereMonth('created_at', $m)
-            //->where('status', 0)
+           
             ->select("callid")
             // ->where('callid', 'bq1k1015')
+            ->take(200)
+            ->get()
+            ->toArray();
+            return $callid;
+        }
+        function requestData($y, $m){
+            # NEW CODE =========================================
+            $completed = ['Cancelled','Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
+            $callid = DB::table("bk_requests")
+            ->whereNotNull("callid")
+            ->where(function($query) use ($completed) {
+                $query->whereNotIn('reason', $completed)
+                    ->orWhereNull('reason');
+            })
+            ->where('status', '!=',10)
+            ->whereYear('created_at', $y)
+            ->whereMonth('created_at', $m)
+            ->where('status', 0)
+            ->select("callid")
+            // ->where('callid', 'bq1k1015')
+            ->take(200)
             ->get()
             ->toArray();
             return $callid;
@@ -1142,6 +1369,7 @@ class BkRequestController extends Controller
                             'reason'=> $up->reason,
                             'notify'=>  IdentifyNotify($up->callID)
                 ]) ; 
+                echo 'FORACCEPT-'.$up->callID;
                 #FOR UNASSIGNED
                 }else{
                     DB::table("bk_requests")->where("callid", $up->callID)->update([
@@ -1152,6 +1380,7 @@ class BkRequestController extends Controller
                         'reason'=> $up->reason,
                         'notify'=>  IdentifyNotify($up->callID)
                     ]) ;  
+                    echo 'UNASSIGNED-'.$up->callID;
                 }
                 #FOR ASC DISPATCH
                 if($up->Stat == 'Pending05'){
@@ -1163,6 +1392,7 @@ class BkRequestController extends Controller
                         'reason'=> $up->reason,
                         'notify'=>  IdentifyNotify($up->callID)
                     ]) ;  
+                    echo  'DISPATCH-'.$up->callID;
                 }
                 #FOR REJECTION
                 if($up->Stat == 'Closed07'){
@@ -1174,6 +1404,7 @@ class BkRequestController extends Controller
                         'reason'=> $up->reason,
                         'notify'=>  IdentifyNotify($up->callID)
                     ]) ;  
+                    echo 'REJECTION-'. $up->callID;
                 }
                     // if (($index + 1) % $reset_index === 0) {
                     //      $reset_index += 12; // set the next reset index
@@ -1186,7 +1417,8 @@ class BkRequestController extends Controller
         for ($i = 1; $i <= $m; $i++) {
             $callID = requestData($y,$i);
             syncing($callID, $i);
-          
+            $callID2 = requestData2($y,$i);
+            syncing($callID2, $i);
         }
         return 'Done..!';
            
@@ -2174,6 +2406,7 @@ class BkRequestController extends Controller
         return $req;
 
     }
+    
     public function genCode(){
      
         function Gentoken($auth){

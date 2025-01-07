@@ -348,6 +348,7 @@ Route::get('/queries/customers/account', 'SapApiController@queries');
 ///APPLETRONICS BOOKING
 Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], function () {
 	Route::get('/unassigned', 'BkRequestController@getunassigned')->name('app.booking.system.getunassigned');
+	Route::post('/unassigned/approver', 'BkRequestController@unassignedApprover')->name('app.booking.system.unassignedApprover');
 	//BRANCH ACCESS
 	Route::post('/restore', 'BkRequestController@restore')->name('app.booking.system.restore');
 	Route::post('/restore/close', 'BkRequestController@close')->name('app.booking.system.restore.close');
@@ -361,6 +362,7 @@ Route::group(['prefix' => '/booking','middleware' => ['jwt.auth', 'booking']], f
 
 	Route::get('/jobs', 'BkRequestController@jobs')->name('app.booking.system.jobs');
 	Route::get('/jobs/counts', 'BkRequestController@count')->name('app.booking.system.jobs.counts');
+	Route::get('/jobs/counts/unassigned', 'BkRequestController@countunassigned')->name('app.booking.system.jobs.countunassigned');
     Route::post('/quest/customer/store', 'BkRequestController@customerbook')->name('app.booking.system.customerbook');
 	//ADMIN ONLY ACCESS
 	//ACTIONS

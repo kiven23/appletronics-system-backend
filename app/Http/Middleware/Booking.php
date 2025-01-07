@@ -16,7 +16,7 @@ class Booking
     public function handle($request, Closure $next)
     {
         
-       if ($request->is('api/booking/unassigned') 
+       if ($request->is('api/booking/unassigned/approver') || $request->is('api/booking/unassigned') 
         || $request->is('api/booking/jobs')
         || $request->is('api/booking/store')
         || $request->is('api/booking/quest/customer/store')
@@ -87,10 +87,10 @@ class Booking
                 abort('403');
             }
     
-        } 
+        }  
         //MORE ACCESS
         if ($request->is('api/booking/jobs/salesinvoice/download') || 
-            $request->is('api/booking/jobs/checkrecords')||$request->is('api/booking/jobs/additional/download') || $request->is('api/booking/jobs/counts') || $request->is('api/booking/jobs/additional/upload') ) {
+            $request->is('api/booking/jobs/checkrecords')||$request->is('api/booking/jobs/additional/download') || $request->is('api/booking/jobs/counts')  || $request->is('api/booking/jobs/counts/unassigned') || $request->is('api/booking/jobs/additional/upload') ) {
             if (\Auth::user()->hasPermissionTo('Api Control')) {
                 return $next($request);
             } else {
