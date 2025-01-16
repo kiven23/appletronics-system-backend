@@ -1262,8 +1262,8 @@ class BkRequestController extends Controller
         }
         $y = Carbon::now()->year;
         $m = Carbon::now()->month; 
-        // $y = Carbon::now()->subYear()->year;  // Last year
-        // $m = Carbon::now()->subMonth()->month; // Last month
+        //$y = Carbon::now()->subYear()->year;  // Last year
+        //$m = Carbon::now()->subMonth()->month; // Last month
 
         function requestData2($y, $m){
             # NEW CODE =========================================
@@ -1280,7 +1280,7 @@ class BkRequestController extends Controller
            
             ->select("callid")
             // ->where('callid', 'bq1k1015')
-            ->take(200)
+            //->take(200)
             ->get()
             ->toArray();
             return $callid;
@@ -1300,7 +1300,7 @@ class BkRequestController extends Controller
             ->where('status', 0)
             ->select("callid")
             // ->where('callid', 'bq1k1015')
-            ->take(200)
+            //->take(200)
             ->get()
             ->toArray();
             return $callid;
@@ -1415,10 +1415,15 @@ class BkRequestController extends Controller
                 return 'sync';
         }
         for ($i = 1; $i <= $m; $i++) {
-            $callID = requestData($y,$i);
-            syncing($callID, $i);
+            // $callID = requestData($y,$i);
+            // syncing($callID, $i);
             $callID2 = requestData2($y,$i);
             syncing($callID2, $i);
+        }
+        for ($i = 1; $i <= $m; $i++) {
+            $callID = requestData($y,$i);
+            syncing($callID, $i);
+            
         }
         return 'Done..!';
            
@@ -2299,8 +2304,7 @@ class BkRequestController extends Controller
     }
 
     public function customerbook(Request $req){
-        return $req->units;
-        return @\Auth::user();
+        return $this->store($req);
     }
     
     public function phoneuserverify(Request $req){
@@ -2362,8 +2366,24 @@ class BkRequestController extends Controller
     //         return 2;
     //       }
     //    }
-             
-             
+        function sendMessage($number,$message){
+            $client = new Client();
+            $username = 'joanalynlalicon@addessa.com';
+            $password = 'sg#v5LA2';
+            $body = json_encode([
+                "messageType" => "sms",
+                "destination" => $number,
+                "text" => $message
+            ]);
+            // $this->decrypt($res->number)
+            return $client->request('POST', 'https://messagingsuite.smart.com.ph/cgpapi/messages/sms', [
+                'auth' => [$username, $password],
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+                'body' => $body
+            ]);
+        }
 
        $today = Carbon::now()->toDateString();
        $check = DB::table('self_bookings')
@@ -2392,14 +2412,17 @@ class BkRequestController extends Controller
         $new->code = $otp;
         $new->status = 0;
         $new->exp = 5;
-    
+        $message = 'Your verification code is '.$otp.'. Enter this code to complete your authentication. Do not share it with anyone.';
         if($check){
             $new->count = $check->count + 1;
             $new->update();
+            sendMessage($req->phone, $message);
             return "update";
         }else{
             $new->count = 1;
             $new->save();
+            
+            sendMessage($req->phone, $message);
             return "save";
         }
          
@@ -2408,7 +2431,7 @@ class BkRequestController extends Controller
     }
     
     public function genCode(){
-     
+         
         function Gentoken($auth){
             $branchuser = DB::table('users')->where('first_name', 'Promodiser')->where('branch_id', $auth)->pluck('email')->first();
             $authController = new AuthController();
@@ -2426,12 +2449,11 @@ class BkRequestController extends Controller
 
         foreach($branch as $b){
             if($b->name){
-                $d[] = ['qrcode'=> genQrcode('https://appletronics.com.ph:2031/verify?token='.base64_encode(base64_encode(base64_encode(base64_encode($b->name)))).'&key=SHhikA97phXxk4jCye9SPpPxr0gnJarPdFUtt779KSTANZg7DBMzHaDpvHUrgDz0ok4uBfoguOtQKJU1lerQ'),'code'=> 'https://appletronics.com.ph:2031/verify?token='.base64_encode(base64_encode(base64_encode(base64_encode($b->name)))).'&key=SHhikA97phXxk4jCye9SPpPxr0gnJarPdFUtt779KSTANZg7DBMzHaDpvHUrgDz0ok4uBfoguOtQKJU1lerQ', 'branch'=> $b->name ];
-                 
-                    // $f[] = ['error'=>  $b->name, 'in'=> Gentoken($b->id)];
-          
+                $d[] = ['qrcode'=> genQrcode('http://192.168.1.19:8081/verify?token='.base64_encode(base64_encode(base64_encode(base64_encode($b->name)))).'&key=SHhikA97phXxk4jCye9SPpPxr0gnJarPdFUtt779KSTANZg7DBMzHaDpvHUrgDz0ok4uBfoguOtQKJU1lerQ'),'code'=> 'http://192.168.1.19:8081/verify?token='.base64_encode(base64_encode(base64_encode(base64_encode($b->name)))).'&key=SHhikA97phXxk4jCye9SPpPxr0gnJarPdFUtt779KSTANZg7DBMzHaDpvHUrgDz0ok4uBfoguOtQKJU1lerQ', 'branch'=> $b->name ];
+  
             }
         }
+        return view('appletronics_reports.qrcode-layout.index',compat('d'));
         // foreach($f as $e){
         //      $da = @$e['in']->original['access_token'];
         //      if(!$da){
