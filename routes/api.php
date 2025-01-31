@@ -411,7 +411,7 @@ Route::get('/testing/api', 'BkRequestController@regionMap');
 Route::get('/testing/sapapi', 'BkRequestController@dbug');
 
 Route::get('/branch/gencode', 'BkRequestController@genCode');
- 
+Route::get('/branch/getbranch', 'BkRequestController@getBranch');
 //PRINT REQUEST FORM
 Route::get('/appletronics/reports/requestform', 'BkRequestController@print');
 Route::get('/appletronics/test', 'BkRequestController@CallIdTracking'); 

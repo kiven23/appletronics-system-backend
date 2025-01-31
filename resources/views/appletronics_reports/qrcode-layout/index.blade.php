@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Code Viewer</title>
+     
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -71,23 +72,7 @@
     </div>
 
     <script>
-        const data = [
-            {
-                "qrcode": "https://www.qrcoder.co.uk/api/v4/?key=Akfpq0XtBu6nHoDMCWTg9ciQILe3JwmK&text=http%3A%2F%2F192.168.1.19%3A8081%2Fverify%3Ftoken%3DVlZaa1UyUkhSbGhPUkRBOQ%3D%3D%26key%3DSHhikA97phXxk4jCye9SPpPxr0gnJarPdFUtt779KSTANZg7DBMzHaDpvHUrgDz0ok4uBfoguOtQKJU1lerQ",
-                "code": "http://192.168.1.19:8081/verify?token=VlZaa1UyUkhSbGhPUkRBOQ==&key=SHhikA97phXxk4jCye9SPpPxr0gnJarPdFUtt779KSTANZg7DBMzHaDpvHUrgDz0ok4uBfoguOtQKJU1lerQ",
-                "branch": "Admin"
-            },
-            {
-                "qrcode": "https://www.qrcoder.co.uk/api/v4/?key=Akfpq0XtBu6nHoDMCWTg9ciQILe3JwmK&text=http%3A%2F%2F192.168.1.19%3A8081%2Fverify%3Ftoken%3DVlZaa2EyUnRTak5RVkRBOQ%3D%3D%26key%3DSHhikA97phXxk4jCye9SPpPxr0gnJarPdFUtt779KSTANZg7DBMzHaDpvHUrgDz0ok4uBfoguOtQKJU1lerQ",
-                "code": "http://192.168.1.19:8081/verify?token=VlZaa2EyUnRTak5RVkRBOQ==&key=SHhikA97phXxk4jCye9SPpPxr0gnJarPdFUtt779KSTANZg7DBMzHaDpvHUrgDz0ok4uBfoguOtQKJU1lerQ",
-                "branch": "Agoo"
-            },
-            {
-                "qrcode": "https://www.qrcoder.co.uk/api/v4/?key=Akfpq0XtBu6nHoDMCWTg9ciQILe3JwmK&text=http%3A%2F%2F192.168.1.19%3A8081%2Fverify%3Ftoken%3DVlZaa05HRkhTbGhpU0ZacFRUQXdPUT09%26key%3DSHhikA97phXxk4jCye9SPpPxr0gnJarPdFUtt779KSTANZg7DBMzHaDpvHUrgDz0ok4uBfoguOtQKJU1lerQ",
-                "code": "http://192.168.1.19:8081/verify?token=VlZaa05HRkhTbGhpU0ZacFRUQXdPUT09&key=SHhikA97phXxk4jCye9SPpPxr0gnJarPdFUtt779KSTANZg7DBMzHaDpvHUrgDz0ok4uBfoguOtQKJU1lerQ",
-                "branch": "Alaminos"
-            }
-        ];
+        const data = @json($d);
 
         const container = document.getElementById('qrcode-list');
 

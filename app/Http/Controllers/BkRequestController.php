@@ -264,6 +264,9 @@ class BkRequestController extends Controller
     public function attachment(request $req){
             return $req;
     }
+    public function getBranch(request $req){
+        return DB::table('branches')->get();
+    }
     public function countunassigned(request $req){
         
         $threeDaysAgo = Carbon::now()->subDays(3);
@@ -1249,11 +1252,14 @@ class BkRequestController extends Controller
                                 "OSCL.U_CallStatusReason as Stat",
                                 "UFD1.Descr as reason",
                                 "OCLG.Notes",
-                                "OCLG.ClgCode"           
+                                "OCLG.ClgCode" ,
+                                "CntctDate as time"               
                 )
                 //->latest("OSCL.U_SchedDate")
                 ->where("OSCL.callID", $callid)
-                ->orderBy("OCLG.ClgCode", "desc")
+                //->orderBy("OCLG.ClgCode", "desc")
+
+                ->orderby("CntctDate", "DESC")
                 //->get()
                 ->first();
             if($dd){
@@ -1262,12 +1268,12 @@ class BkRequestController extends Controller
         }
         $y = Carbon::now()->year;
         $m = Carbon::now()->month; 
-        //$y = Carbon::now()->subYear()->year;  // Last year
-        //$m = Carbon::now()->subMonth()->month; // Last month
-
+        $yl = Carbon::now()->subYear()->year;  // Last year
+        $ml = Carbon::now()->subMonth()->month; // Last month
+// 'Endorsed to Other ASC'
         function requestData2($y, $m){
             # NEW CODE =========================================
-            $completed = ['Cancelled','Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
+            $completed = ['Cancelled','Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced'];
             $callid = DB::table("bk_requests")
             ->whereNotNull("callid")
             ->where(function($query) use ($completed) {
@@ -1275,8 +1281,8 @@ class BkRequestController extends Controller
                     ->orWhereNull('reason');
             })
             ->where('status', '!=',10)
-            ->whereYear('created_at', $y)
-            ->whereMonth('created_at', $m)
+            ->whereYear('updated_at', $y)
+            ->whereMonth('updated_at', $m)
            
             ->select("callid")
             // ->where('callid', 'bq1k1015')
@@ -1287,7 +1293,7 @@ class BkRequestController extends Controller
         }
         function requestData($y, $m){
             # NEW CODE =========================================
-            $completed = ['Cancelled','Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced', 'Endorsed to Other ASC'];
+            $completed = ['Cancelled','Repaired and Released','Return to Owner (RTO)','Checked up','Installed', 'Repaired', 'Cleaned', 'Surveyed', 'Dismantled', 'Replaced'];
             $callid = DB::table("bk_requests")
             ->whereNotNull("callid")
             ->where(function($query) use ($completed) {
@@ -1295,8 +1301,8 @@ class BkRequestController extends Controller
                     ->orWhereNull('reason');
             })
             ->where('status', '!=',10)
-            ->whereYear('created_at', $y)
-            ->whereMonth('created_at', $m)
+            ->whereYear('updated_at', $y)
+            ->whereMonth('updated_at', $m)
             ->where('status', 0)
             ->select("callid")
             // ->where('callid', 'bq1k1015')
@@ -1414,17 +1420,52 @@ class BkRequestController extends Controller
                 echo "sync-month".'-'.$c;
                 return 'sync';
         }
+        function logs($logs){
+         return  DB::table('syncinglogs')->insert([
+                'current'=> 'booking',
+                'logs'=> $logs,
+                'created_date' => date("Y-m-d h:i:s")
+            ]);
+           
+        }
+        $newData = [];
+       
+        // Function to filter out duplicate callids
+        function filterArray(&$uniqueData, $dataArray){
+            foreach ($dataArray as $data) {
+                $exists = false;
+                foreach ($uniqueData as $item) {
+                    if ($item->callid === $data->callid) { // Access as object
+                        $exists = true;
+                        break;
+                    }
+                }
+                if (!$exists) {
+                    $uniqueData[] = $data;
+                }
+            }
+        }
+
         for ($i = 1; $i <= $m; $i++) {
-            // $callID = requestData($y,$i);
-            // syncing($callID, $i);
-            $callID2 = requestData2($y,$i);
-            syncing($callID2, $i);
+         $callID2 = requestData2($y,$i);
+         filterArray($newData, $callID2);
         }
         for ($i = 1; $i <= $m; $i++) {
             $callID = requestData($y,$i);
-            syncing($callID, $i);
-            
+            filterArray($newData, $callID2);
         }
+        for ($i = 10; $i <= $ml; $i++) {
+            $callID = requestData($yl,$i);
+            filterArray($newData, $callID2);
+        }
+        for ($i = 10; $i <= $ml; $i++) {
+            $callID2 = requestData2($yl,$i);
+            filterArray($newData, $callID2);
+        }
+         $filter = json_encode($newData , true);
+        logs($filter);
+       syncing($newData, 'all-data');
+      
         return 'Done..!';
            
     return calendar($db);
@@ -1704,7 +1745,7 @@ class BkRequestController extends Controller
     //return "Hold";
      
     return $this->syncSapBookingSched();
-    return   DB::connection("sqlsrv3")->table("OSCL")
+     $req = DB::connection("sqlsrv3")->table("OSCL")
        ->join("OINS", 'OSCL.internalSN', '=', 'OINS.internalSN')
        ->leftJoin("OHEM", 'OSCL.technician', '=', 'OHEM.empID')
        ->join("OCLG", 'OSCL.callID', '=', 'OCLG.parentId' )
@@ -1722,16 +1763,20 @@ class BkRequestController extends Controller
                        "OHEM.firstName as techF",
                        "OSCL.U_CallStatusReason as Stat" ,
                        "UFD1.Descr as reason",
-                        "OCLG.Notes"            
+                       "OCLG.Notes" ,
+                       "OCLG.ClgCode" ,
+                       "CntctDate as time"              
        )
       // ->whereNull('OSCL.U_SchedDate')
       // ->latest("OSCL.U_SchedDate")
         //->take(10)
         //->where('OSCL.U_CallStatusReason','Pending05')
-       ->where("OSCL.callID", 137971 )
+       ->where("OSCL.callID", 242975 )
        // ->whereYear("OSCL.U_SchedDate", '2022')
        // ->whereMonth("OSCL.U_SchedDate", '>=','08')
-       ->get();
+       ->orderby("CntctDate", "DESC")
+       ->first();
+       return Response()->json($req);
     }
     public function notify(){
        
@@ -2244,7 +2289,7 @@ class BkRequestController extends Controller
         
       
            if($req->identify == 1){
-            
+             
                 return BkRequest::with(['customer'=> function($q){
                     $q->select(\DB::raw("*, CONCAT(lastname, ', ', firstname) as fullname"));
                      }])
@@ -2261,6 +2306,7 @@ class BkRequestController extends Controller
                     ->leftjoin('OUSR', 'OCLG.AssignedBy', '=', 'OUSR.USERID')
                     ->where('parentId',  $req->callid)
                     ->select('CntctDate as time', 'Notes as message', 'OUSR.U_NAME as from')
+                    ->orderby('CntctDate', 'DESC')
                     ->get();
            }
            
@@ -2453,7 +2499,7 @@ class BkRequestController extends Controller
   
             }
         }
-        return view('appletronics_reports.qrcode-layout.index',compat('d'));
+        return view('appletronics_reports.qrcode-layout.index',compact('d'));
         // foreach($f as $e){
         //      $da = @$e['in']->original['access_token'];
         //      if(!$da){
